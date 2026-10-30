@@ -13,21 +13,21 @@ This repository contains the core mathematical engine, algebraic wrappers, and r
 
 ## 🚀 Key Architectural Features
 
-1. **Non-Systematic Reed-Solomon Puncturing Defense ($\mathcal{R} = 0.75$):**
-   * Employs an extended $[256, 192, 65]_{256}$ code over $\mathbb{F}_{2^8}$ with a design distance of $d = 65$ and a unique decoding radius of $\aleph = 32$ symbol errors.
-   * Utilizes a non-systematic scrambling matrix $S \in \mathrm{GL}_{192}(\mathbb{F}_{256})$ to provide a robust MDS puncturing margin ($\delta = 64$ bytes), neutralizing direct linear matrix inversion attacks.
+1. **Non-Systematic Reed-Solomon Puncturing Defense (Rate *R* = 0.75):**
+   * Employs an extended [256, 192, 65]₂₅₆ code over F₂₅₆ with a design distance of *d* = 65 and a unique decoding radius of ℵ = 32 symbol errors.
+   * Utilizes a non-systematic scrambling matrix *S* ∈ GL₁₉₂(F₂₅₆) to provide a robust MDS puncturing margin (*δ* = 64 bytes), neutralizing direct linear matrix inversion attacks.
 
 2. **Two-Tier Revocation Strategy:**
-   * **Tier-1 (Intra-Epoch Zero-Latency Revocation):** Implements a cover-free family of clean windows $\mathcal{W}_j$ of size $w_{\mathrm{clean}} = 16$ within a revocation sub-block ($M = 48$ bytes) with bounded pairwise intersection $\Delta_{\mathrm{int}} \le 4$. Enables instant user blacklisting via targeted broadcast perturbations $\boldsymbol{\delta}_{\mathrm{rev}}$.
+   * **Tier-1 (Intra-Epoch Zero-Latency Revocation):** Implements a cover-free family of clean windows *W*<sub>*j*</sub> of size *w*<sub>clean</sub> = 16 within a revocation sub-block (*M* = 48 bytes) with bounded pairwise intersection Δ<sub>int</sub> ≤ 4. Enables instant user blacklisting via targeted broadcast perturbations **δ**<sub>rev</sub>.
    * **Tier-2 (Inter-Epoch Hard Reset):** Global cohort blocker rotation ensuring long-term cryptographic hygiene and history purging.
 
 3. **Homomorphic ElGamal Engine & Split-Key DKG:**
-   * Block-wise ElGamal aggregation over $\mathbb{G}_1 \times \mathbb{G}_1$ using carry-free Base-3 scalar embedding $\mathfrak{W}_\eta(\cdot)$.
-   * Split-key distributed key generation (DKG/MPC) maintaining the invariant $S_{\U{j}} \dot{+} \mathsf{H}_j = [\alpha]\mathsf{G}_2$, allowing zero-knowledge decryption via bilinear pairing projection into $\mathbb{G}_T$ and short-interval cyclotomic DLP resolution.
+   * Block-wise ElGamal aggregation over G₁ × G₁ using carry-free Base-3 scalar embedding W<sub>η</sub>(·).
+   * Split-key distributed key generation (DKG/MPC) maintaining the invariant *S*<sub>U<sub>*j*</sub></sub> ∔ *H*<sub>*j*</sub> = [α]G₂, allowing zero-knowledge decryption via bilinear pairing projection into G<sub>*T*</sub> and short-interval cyclotomic DLP resolution.
 
 4. **Two-Layer Collusion Resistance:**
-   * **Base-3 Carry Avalanche:** Homomorphic aggregation of $T \ge 3$ ciphertexts in $\mathbb{G}_1$ triggers inter-digit ternary carries ($3 = 10_3$, $4 = 11_3$), causing a catastrophic 256/256-byte decoding failure.
-   * **Combinatorial Error Amplification:** Same-attribute odd coalitions ($T = 2c + 1$) attempting direct algebraic combination in $\mathbb{F}_{256}$ encounter an enforced error weight $\mathbb{E}[\mathsf{wt}(\mathbf{e}_{\mathrm{coll}})] \ge 43.8 > J(128,64) = 38$, strictly exceeding the Johnson list-decoding bound.
+   * **Base-3 Carry Avalanche:** Homomorphic aggregation of *T* ≥ 3 ciphertexts in G₁ triggers inter-digit ternary carries (3 = 10₃, 4 = 11₃), causing a catastrophic 256/256-byte decoding failure.
+   * **Combinatorial Error Amplification:** Same-attribute odd coalitions (*T* = 2*c* + 1) attempting direct algebraic combination in F₂₅₆ encounter an enforced error weight E[wt(**e**<sub>coll</sub>)] ≥ 43.8 > *J*(128, 64) = 38, strictly exceeding the Johnson list-decoding bound.
 
 ---
 
