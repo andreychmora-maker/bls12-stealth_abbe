@@ -1,7 +1,9 @@
 # Stealth ABBE: Attribute-Based Broadcast Encryption
 
-[![Magma Compatible](https://img.shields.io/badge/Language-Magma%20V2.29.10-blue.svg)](http://magma.maths.usyd.edu.au/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[![Magma Compatible](https://img.shields.io/badge/Language-Magma%20V2.29.10-blue.svg)](http://magma.maths.usyd.edu.au/)
+[![Code Rate](https://img.shields.io/badge/Code%20Rate-R%3D0.75-green.svg)]()
 
 **Stealth ABBE** is a high-performance, provably secure Attribute-Based Broadcast Encryption framework combining homomorphic ElGamal encryption over pairing-friendly elliptic curves with non-systematic Reed-Solomon error-correcting codes and a two-tier cryptographic revocation mechanism.
 
