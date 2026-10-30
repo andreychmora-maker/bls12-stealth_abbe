@@ -45,3 +45,21 @@ To run the reference prototype and verify all security scenarios, open your Magm
 
 ```magma
 load "stealth_abbe.m";
+```
+### 📚 Academic Citation
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg)](https://doi.org/10.5281/zenodo.23677112)
+
+If you utilize these scripts in your research,
+please cite the associated archive:
+
+```bash
+@misc{chmora2026stealthabbe,
+  author       = {Andrey Chmora},
+  title        = {Stealth ABBE: Carry-Free Homomorphic Packing and Blind Reed–Solomon Decoding},
+  month        = {Oct},
+  year         = {2026},
+  publisher    = {Zenodo},
+  doi          = 10.5281/zenodo.23536594
+  url          = [https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg](https://doi.org/10.5281/zenodo.23677112)
+```
