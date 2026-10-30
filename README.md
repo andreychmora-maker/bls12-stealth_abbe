@@ -1,7 +1,6 @@
 # Stealth ABBE: Attribute-Based Broadcast Encryption
 
 [![Magma Compatible](https://img.shields.io/badge/Language-Magma%20V2.28%2B-blue.svg)](http://magma.maths.usyd.edu.au/)
-[![Code Rate](https://img.shields.io/badge/Code%20Rate-%mathcal{R}%3D0.75-green.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Stealth ABBE** is a high-performance, provably secure Attribute-Based Broadcast Encryption framework combining homomorphic ElGamal encryption over pairing-friendly elliptic curves with non-systematic Reed-Solomon error-correcting codes and a two-tier cryptographic revocation mechanism.
@@ -32,7 +31,7 @@ This repository contains the core mathematical engine, algebraic wrappers, and r
 
 ## 🛠️ Repository Structure
 
-* `stealth_abbe_prototype.m` — End-to-end Magma verification script containing:
+* `stealth_abbe.m` — End-to-end Magma verification script containing:
   * O(1) Short-Interval DLP lookup table (LUT) generator.
   * Non-systematic RS encoder and error-bounded syndrome decoder.
   * Cover-free clean window geometry verifier.
@@ -45,4 +44,4 @@ This repository contains the core mathematical engine, algebraic wrappers, and r
 To run the reference prototype and verify all security scenarios, open your Magma environment and load the script:
 
 ```magma
-load "stealth_abbe_prototype.m";
+load "stealth_abbe.m";
