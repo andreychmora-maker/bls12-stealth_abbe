@@ -1,5 +1,5 @@
 # Stealth ABBE: Attribute-Based Broadcast Encryption
-
+10.5281/zenodo.23537348
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [![Magma Compatible](https://img.shields.io/badge/Language-Magma%20V2.29.10-blue.svg)](http://magma.maths.usyd.edu.au/)
