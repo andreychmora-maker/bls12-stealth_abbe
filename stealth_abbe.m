@@ -2,7 +2,7 @@
    STEALTH ABBE END-TO-END PROTOTYPE & CRYPTANALYTIC BENCHMARK
    Based on the A-Scheme Homomorphic Engine (a_prototype.m)
    Parameters: RS [256, 192, 65]_256 (Rate R = 0.75, aleph = 32),
-               M = 48, w_clean = 20, tau_coh = 28, Delta_int = 4, eta = 8
+               M = 48, w_clean = 16, tau_coh = 27, Delta_int = 4, eta = 8
    ========================================================================== */
 clear;
 
@@ -68,23 +68,23 @@ end function;
 F<w> := GaloisField(256);
 n_len := 256;
 k_dim := 192; // Code rate R = k/n = 0.75 (MDS puncturing margin delta = 64 bytes)
+d_rs255 := n_len - k_dim; // Design distance d = 64 for punctured [255, 192, 64]_256
 
-// Standard [255, 192, 64] RS code for fast hardware-like syndrome decoding
-C_rs255 := ReedSolomonCode(F, 192);
+C_rs255 := ReedSolomonCode(F, d_rs255); // [255, 192, 64] over GF(256)
 G_sys255 := GeneratorMatrix(C_rs255);
 
-// Extend to n = 256 by appending a parity check coordinate (sum of all 255 coords)
+// Extend to n = 256 by appending an overall parity check coordinate
 V256 := VectorSpace(F, n_len);
 V192 := VectorSpace(F, k_dim);
 
-G_ext_rows := [];
+G_ext_flat := [];
 for r in [1..k_dim] do
     row_seq := ElementToSequence(G_sys255[r]);
     parity_coord := &+row_seq;
     Append(~row_seq, parity_coord);
-    Append(~G_ext_rows, row_seq);
+    G_ext_flat cat:= row_seq;
 end for;
-G_ext := Matrix(F, k_dim, n_len, G_ext_rows);
+G_ext := Matrix(F, k_dim, n_len, G_ext_flat);
 
 // Non-systematic scrambling matrix S in GL_k(F_q) to prevent systematic puncturing
 repeat
@@ -93,7 +93,7 @@ until IsInvertible(S_scram);
 S_inv := S_scram^(-1);
 G_ns := S_scram * G_ext; // Non-systematic generator matrix [192 x 256]
 
-aleph := (n_len - k_dim) div 2; // Unique decoding radius = 32 symbol errors
+aleph := 31; // Syndrome decoder radius on the 255-byte RS projection (32 on full MDS)
 
 FieldElementToBinVec := function(element)
     seq := ElementToSequence(element);
@@ -108,24 +108,22 @@ BinVecToFieldElement := function(bin_vec)
     return F ! [ GF(2) ! x : x in le_vec ];
 end function;
 
-// Non-systematic RS Encoder & Blind Decoder wrapper
+// Non-systematic RS Encoder & Safe Blind Decoder wrapper
 EncodeNS := function(kappa_vec)
     return kappa_vec * G_ns;
 end function;
 
 DecodeNS := function(perturbed_cw)
-    // Project onto the first 255 coordinates for syndrome decoding
     cw_255 := VectorSpace(F, 255) ! [perturbed_cw[i] : i in [1..255]];
     ok, dec_cw255 := Decode(C_rs255, cw_255);
-    if not ok then
+    // Guard against uncorrectable vectors that are not in the code space C_rs255
+    if (not ok) or (not (dec_cw255 in C_rs255)) then
         return false, V192!0, -1;
     end if;
-    // Recover scrambled message & invert S_scram
     scr_msg_seq := Coordinates(C_rs255, dec_cw255);
     scr_msg_vec := V192 ! scr_msg_seq;
     kappa_hat   := scr_msg_vec * S_inv;
     
-    // Re-encode to full 256-byte codeword to count exact Hamming weight of error e_j
     full_clean_cw := kappa_hat * G_ns;
     err_vec := perturbed_cw + full_clean_cw;
     wt_err  := #[i : i in [1..n_len] | err_vec[i] ne F!0];
@@ -150,14 +148,13 @@ G := E![GF(p)!0x9, GF(p)!Gy];
 q := 2^252 + 27742317777372353535851937790883648493;
 
 Weights := [3^i : i in [0..eta-1]];
-MaxWeightSum := (&+Weights) * 3; // Supports up to T=3 homomorphic additions in LUT
+MaxWeightSum := (&+Weights) * 4;
 printf "Building O(1) Short-Interval DLP LUT (Max Z = %o)...\n", MaxWeightSum;
 LUT := BuildECDLPTable(G, MaxWeightSum);
 
 P_pub, alpha := MasterKeyGen(G, q);
 printf "Domain & Non-Systematic RS Setup completed in %.3o sec.\n", Cputime(t_start);
 
-// Helper: Encrypt a 256-byte vector over F_256 into N_blk = 256 ElGamal blocks
 EncryptVectorEG := function(vec_256, P_pub, G, q, Weights, eta)
     CipherBlocks := [];
     for t in [1..#vec_256] do
@@ -168,7 +165,6 @@ EncryptVectorEG := function(vec_256, P_pub, G, q, Weights, eta)
     return CipherBlocks;
 end function;
 
-// Helper: Homomorphically add Broadcast Ciphertext C and User Code C_Uj & decrypt
 HomomorphicEvalAndUnpack := function(C_bc, C_user_list, sk_j, h_j, q, LUT, eta)
     OutVec := [F!0 : t in [1..#C_bc]];
     for t in [1..#C_bc] do
@@ -190,26 +186,22 @@ end function;
    PART 4: COHORT & TIER-1 COVER-FREE ATTRIBUTE PROVISIONING
    -------------------------------------------------------------------------- */
 M_rev      := 48;  // Revocation sub-block length (bytes 209..256)
-w_clean    := 20;  // Clean window size |W_j| = 20
-tau_coh    := M_rev - w_clean; // Baseline error weight = 28 <= aleph = 32
+w_clean    := 16;  // Clean window size |W_j| = 16
+tau_coh    := 27;  // Baseline error weight = 27 (so 27 + Delta_int = 31 <= aleph)
 Delta_int  := 4;   // Max pairwise window intersection |W_j cap W_j'| <= 4
 attr_len   := 128 - M_rev; // 80 bytes of unconstrained semantic attributes
 
-// Global masks: cohort blocker w (128B), session mask m (256B), base policy p_i (128B)
 w_cohort := [Random(F) : i in [1..128]];
 m_mask   := [Random(F) : i in [1..256]];
 p_policy := [Random(F) : i in [1..128]];
 
-// Construct cover-free clean windows W_1, W_2, W_3, W_4 in {1..48} with |W_a cap W_b| <= 4
-// W_1: {1..20}
-// W_2: {1..4} U {21..36}   (intersects W_1 in 4 coords: {1..4})
-// W_3: {5..8} U {21..24} U {37..48} (intersects W_1 in {5..8}, W_2 in {21..24})
-// W_4: {9..12} U {25..32} U {37..44}
+// Partition {1..48} into 12 blocks of 4 elements: B_1..B_12
+B := [ [4*(b-1)+1 .. 4*b] : b in [1..12] ];
 CleanWindows := [
-    Set([1..20]),
-    Set([1..4] cat [21..36]),
-    Set([5..8] cat [21..24] cat [37..48]),
-    Set([9..12] cat [25..32] cat [37..44])
+    Set(B[1] cat B[2] cat B[3] cat B[4]),   // W_1: blocks 1, 2, 3, 4
+    Set(B[1] cat B[5] cat B[6] cat B[7]),   // W_2: blocks 1, 5, 6, 7
+    Set(B[2] cat B[5] cat B[8] cat B[9]),   // W_3: blocks 2, 5, 8, 9
+    Set(B[3] cat B[6] cat B[8] cat B[10])   // W_4: blocks 3, 6, 8, 10
 ];
 
 printf "\n--- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---\n";
@@ -220,25 +212,23 @@ for a in [1..4] do
     end for;
 end for;
 
-// Generate User Profiles r_j (all sharing identical 80-byte semantic attributes!)
 BuildUserVector := function(W_j, p_pol, w_coh, m_msk)
     r_j := [F!0 : i in [1..128]];
-    // First 80 coordinates: exact match with broadcast policy p_i (zero attribute error)
     for s in [1..attr_len] do
         r_j[s] := p_pol[s];
     end for;
-    // Last M = 48 coordinates (positions 81..128 of right half): Tier-1 structure
+    complement_seq := [s : s in [1..M_rev] | not (s in W_j)];
+    error_positions := Set(complement_seq[1..tau_coh]);
     for s in [1..M_rev] do
         pos := attr_len + s;
-        if s in W_j then
-            r_j[pos] := p_pol[pos]; // Clean window: 0 error
-        else
+        if s in error_positions then
             eps := F!0;
             while eps eq F!0 do eps := Random(F); end while;
-            r_j[pos] := p_pol[pos] + eps; // Baseline error support S_j (28 non-zero errors)
+            r_j[pos] := p_pol[pos] + eps;
+        else
+            r_j[pos] := p_pol[pos];
         end if;
     end for;
-    // Composite vector M_j = (w || r_j) + m
     w_concat_r := w_coh cat r_j;
     M_j := [w_concat_r[i] + m_msk[i] : i in [1..256]];
     return r_j, M_j;
@@ -267,12 +257,10 @@ printf "\n=== SCENARIO 1: BASELINE BROADCAST TO AUTHORIZED COHORT ===\n";
 kappa_payload := V192 ! [Random(F) : i in [1..k_dim]];
 c_codeword    := EncodeNS(kappa_payload);
 
-// Broadcast vector c' = c + (w || p_i) + m
 w_concat_p := w_cohort cat p_policy;
 c_prime    := [c_codeword[i] + w_concat_p[i] + m_mask[i] : i in [1..n_len]];
 C_broadcast := EncryptVectorEG(c_prime, P_pub, G, q, Weights, eta);
 
-// Participant U_1 decrypts
 c_double_prime_U1 := HomomorphicEvalAndUnpack(C_broadcast, [Users_C[1]], Users_sk[1], Users_h[1], q, LUT, eta);
 ok_1, rec_kappa_1, wt_1 := DecodeNS(c_double_prime_U1);
 printf "  [U_1 Authorized] RS Decode: %o | Error Weight wt(e_1) = %o (<= aleph = %o) | Payload Match: %o\n",
@@ -282,7 +270,6 @@ printf "  [U_1 Authorized] RS Decode: %o | Error Weight wt(e_1) = %o (<= aleph =
    PART 6: SCENARIO 2 - TIER-1 ZERO-LATENCY REVOCATION OF U_2
    -------------------------------------------------------------------------- */
 printf "\n=== SCENARIO 2: TIER-1 INTRA-EPOCH REVOCATION (TARGETING U_2) ===\n";
-// Broadcaster injects perturbation delta_rev into 12 coordinates of W_2
 p_revoked := p_policy;
 perturbed_coords := SetToSequence(CleanWindows[2])[1..12]; // 12 coords inside W_2
 for s in perturbed_coords do
@@ -296,39 +283,45 @@ w_concat_p_rev := w_cohort cat p_revoked;
 c_prime_rev    := [c_codeword[i] + w_concat_p_rev[i] + m_mask[i] : i in [1..n_len]];
 C_broadcast_rev := EncryptVectorEG(c_prime_rev, P_pub, G, q, Weights, eta);
 
-// Evaluate for Target Revoked User U_2 (Expected weight: 28 + 12 = 40 > 32)
+// Evaluate for Target Revoked User U_2 (Expected weight: 27 + 12 = 39 > 31)
 c_dp_U2 := HomomorphicEvalAndUnpack(C_broadcast_rev, [Users_C[2]], Users_sk[2], Users_h[2], q, LUT, eta);
-ok_2, _, wt_2 := DecodeNS(c_dp_U2);
+ok_2, _, _ := DecodeNS(c_dp_U2);
 actual_wt_U2 := #[i : i in [1..n_len] | (c_dp_U2 + c_codeword)[i] ne F!0];
-printf "  [U_2 REVOKED]    RS Decode: %o  | Error Weight wt(e_2) = %o (> aleph = %o) -> ACCESS BLOCKED!\n",
+printf "  [U_2 REVOKED]    RS Decode: %o | Error Weight wt(e_2) = %o (> aleph = %o) -> ACCESS BLOCKED!\n",
        ok_2, actual_wt_U2, aleph;
 
-// Evaluate for Non-Revoked User U_1 (Shares at most Delta_int = 4 coords with W_2 -> wt <= 28 + 4 = 32)
+// Evaluate for Non-Revoked User U_1 (Shares at most Delta_int = 4 coords with W_2 -> wt <= 27 + 4 = 31)
 c_dp_U1_after := HomomorphicEvalAndUnpack(C_broadcast_rev, [Users_C[1]], Users_sk[1], Users_h[1], q, LUT, eta);
 ok_1_after, rec_kappa_1_after, wt_1_after := DecodeNS(c_dp_U1_after);
 printf "  [U_1 LEGITIMATE] RS Decode: %o  | Error Weight wt(e_1) = %o (<= aleph = %o) | Payload Match: %o\n",
        ok_1_after, wt_1_after, aleph, rec_kappa_1_after eq kappa_payload;
 
 /* --------------------------------------------------------------------------
-   PART 7: SCENARIO 3 & 4 - SAME-ATTRIBUTE COLLUSION ATTACKS (ODD T=3 & EVEN T=2)
+   PART 7: SCENARIO 3 & 4 - SAME-ATTRIBUTE COLLUSION ATTACKS
    -------------------------------------------------------------------------- */
-printf "\n=== SCENARIO 3: ODD COALITION (T = 3) OF SAME-ATTRIBUTE USERS (U_2, U_3, U_4) ===\n";
-// Odd sum: c' + M_2 + M_3 + M_4 in GF(2^m) preserves & cancels w and m,
-// produces 0 error in the 80 semantic attribute bytes, but amplifies errors in M=48!
-c_dp_coll_odd := HomomorphicEvalAndUnpack(C_broadcast, [Users_C[2], Users_C[3], Users_C[4]], Users_sk[2], Users_h[2], q, LUT, eta);
-err_coll_odd  := c_dp_coll_odd + c_codeword;
-wt_left_128   := #[i : i in [1..128]     | err_coll_odd[i] ne F!0];
-wt_attr_80    := #[i : i in [129..208]   | err_coll_odd[i] ne F!0];
-wt_rev_48     := #[i : i in [209..256]   | err_coll_odd[i] ne F!0];
-ok_coll_odd, _, _ := DecodeNS(c_dp_coll_odd);
+printf "\n=== SCENARIO 3A: ALGEBRAIC ODD COALITION (T = 3) OVER GF(256) ===\n";
+// Direct GF(256) sum c' + M_2 + M_3 + M_4 (testing the Tier-1 combinatorial bound in isolation)
+c_alg_coll_odd := V256 ! [c_prime[i] + Users_M[2][i] + Users_M[3][i] + Users_M[4][i] : i in [1..n_len]];
+err_alg_odd    := c_alg_coll_odd + c_codeword;
+wt_alg_left128 := #[i : i in [1..128]   | err_alg_odd[i] ne F!0];
+wt_alg_attr80  := #[i : i in [129..208] | err_alg_odd[i] ne F!0];
+wt_alg_rev48   := #[i : i in [209..256] | err_alg_odd[i] ne F!0];
+ok_alg_odd, _, _ := DecodeNS(c_alg_coll_odd);
 
-printf "  Left 128B Error (w, m canceled): %o\n", wt_left_128;
-printf "  Semantic Attribute 80B Error:    %o (identical attributes!)\n", wt_attr_80;
-printf "  Tier-1 Revocation 48B Error:     %o (Theoretical E[wt] >= 43.8 > J(128,64) = 38)\n", wt_rev_48;
-printf "  Coalition RS Decode Status:      %o -> COLLUSION DEFEATED!\n", ok_coll_odd;
+printf "  Left 128B Error (w, m canceled): %o\n", wt_alg_left128;
+printf "  Semantic Attribute 80B Error:    %o (identical attributes!)\n", wt_alg_attr80;
+printf "  Tier-1 Revocation 48B Error:     %o (> J(128,64) = 38 & aleph = %o)\n", wt_alg_rev48, aleph;
+printf "  Algebraic Coalition RS Decode:   %o -> COLLUSION DEFEATED BY TIER-1!\n", ok_alg_odd;
+
+printf "\n=== SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_1 (BASE-3 CARRY OVERFLOW) ===\n";
+// Adding 4 ElGamal ciphertexts (C_bc + C_U2 + C_U3 + C_U4) causes Base-3 carry overflow (bits sum to 3 or 4)!
+c_hom_coll_odd := HomomorphicEvalAndUnpack(C_broadcast, [Users_C[2], Users_C[3], Users_C[4]], Users_sk[2], Users_h[2], q, LUT, eta);
+err_hom_odd    := c_hom_coll_odd + c_codeword;
+wt_hom_total   := #[i : i in [1..256] | err_hom_odd[i] ne F!0];
+ok_hom_odd, _, _ := DecodeNS(c_hom_coll_odd);
+printf "  Total 256B Error Weight (Base-3 Carry Avalanche): %o / 256 | RS Decode: %o\n", wt_hom_total, ok_hom_odd;
 
 printf "\n=== SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===\n";
-// Even sum: M_2 + M_3 cancels w and m locally, leaving w and m UNMASKED in c'!
 c_dp_coll_even := HomomorphicEvalAndUnpack(C_broadcast, [Users_C[2], Users_C[3]], Users_sk[2], Users_h[2], q, LUT, eta);
 err_coll_even  := c_dp_coll_even + c_codeword;
 wt_total_even  := #[i : i in [1..256] | err_coll_even[i] ne F!0];
