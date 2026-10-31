@@ -71,6 +71,6 @@ please cite the associated archive:
   month        = {Oct},
   year         = {2026},
   publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.23677112}
+  doi          = {10.5281/zenodo.23677112},
   url          = [https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg](https://doi.org/10.5281/zenodo.23677112)
 }
