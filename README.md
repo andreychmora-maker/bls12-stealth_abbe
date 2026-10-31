@@ -50,6 +50,13 @@ To run the reference prototype and verify all security scenarios, open your Magm
 ```magma
 load "stealth_abbe.m";
 ```
+### Expected Output Summary:
+- **Scenario 1 (Baseline Broadcast):** Authorized participant *U*₁ successfully decrypts with error weight wt(**e**₁) = 27 ≤ ℵ = 31.
+- **Scenario 2 (Tier-1 Revocation):** Target user *U*₂ error weight jumps to 39 > 31 (Access Blocked), while legitimate user *U*₁ stays at 31 ≤ 31 (Access Granted).
+- **Scenario 3A (Algebraic Odd Coalition):** Direct sum in GF(256) yields 0 errors in the left 128-byte block and 80-byte attributes, but the revocation sub-block error reaches 43 > 38, defeating list decoding.
+- **Scenario 3B (Homomorphic Odd Coalition):** Base-3 carry overflow in Curve25519 results in 256 / 256 corrupted bytes.
+- **Scenario 4 (Even Coalition):** Unmasked cohort blockers result in 256 / 256 corrupted bytes.
+
 ### 📚 Academic Citation
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg)](https://doi.org/10.5281/zenodo.23677112)
