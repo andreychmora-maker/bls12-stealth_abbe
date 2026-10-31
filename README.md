@@ -64,7 +64,7 @@ load "stealth_abbe.m";
 If you utilize these scripts in your research,
 please cite the associated archive:
 
-```bash
+```bibtex
 @misc{chmora2026stealthabbe,
   author       = {Andrey Chmora},
   title        = {Stealth ABBE: Carry-Free Homomorphic Packing and Blind Reed–Solomon Decoding},
@@ -73,4 +73,4 @@ please cite the associated archive:
   publisher    = {Zenodo},
   doi          = 10.5281/zenodo.23536594
   url          = [https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg](https://doi.org/10.5281/zenodo.23677112)
-```
+}
