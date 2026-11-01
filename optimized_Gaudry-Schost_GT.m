@@ -134,10 +134,15 @@ P2<x2> := PolynomialRing(Fp);
 Fp2 := ext<Fp | x2^2 + 1>; 
 P6<x6> := PolynomialRing(Fp2);
 Fp12 := ext<Fp2 | 6>; 
-
+/*
 repeat
     g_T := Random(Fp12)^((p^12 - 1) div q);
 until g_T ne 1;
+*/
+
+// Instant deterministic generator assignment for g_T without search loops
+// (taking an extension basis element and projecting it into the subgroup of order q)
+g_T := (Fp12.1 + 1)^((p^12 - 1) div q);
 
 DomainParSetUpTime := Cputime(t);
 
