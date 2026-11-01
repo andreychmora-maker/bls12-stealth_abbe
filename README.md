@@ -9,7 +9,7 @@
 
 **Stealth ABBE** is a provably secure Attribute-Based Broadcast Encryption framework combining homomorphic ElGamal encryption with non-systematic Reed-Solomon error-correcting codes and a two-tier cryptographic revocation mechanism.
 
-This repository contains the simplified algebraic verification prototype implemented for the **Magma Computational Algebra System**. To enable fast execution in the Magma Online Calculator, the prototype abstracts the bilinear pairing layer (BLS12) into a single-group ElGamal engine over **Curve25519**, focusing on the exact verification of the Base-3 homomorphic pipeline, non-systematic MDS coding, and Tier-1 cover-free revocation geometry.
+This repository contains the simplified algebraic verification prototype implemented for the **Magma Computational Algebra System** (`stealth_abbe.m`). To enable fast execution in the Magma Online Calculator (~0.5 sec total execution time), the prototype abstracts the bilinear pairing layer (BLS12) into a single-group ElGamal engine over **Curve25519**, focusing on the exact verification of the Base-3 homomorphic pipeline, non-systematic MDS coding, and Tier-1 cover-free revocation geometry.
 
 ---
 
@@ -35,7 +35,7 @@ This repository contains the simplified algebraic verification prototype impleme
 
 ## 🛠️ Repository Structure
 
-* `stealth_abbe.m` — Standalone end-to-end Magma verification script containing:
+- `stealth_abbe.m` — Standalone end-to-end Magma verification script containing:
   * Curve25519 domain setup and O(1) Short-Interval DLP lookup table (LUT) generator.
   * Non-systematic RS [256, 192, 65]₂₅₆ encoder and guarded syndrome decoder.
   * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4).
@@ -50,27 +50,58 @@ To run the reference prototype and verify all security scenarios, open your Magm
 ```magma
 load "stealth_abbe.m";
 ```
+
 ### Expected Output Summary:
-- **Scenario 1 (Baseline Broadcast):** Authorized participant *U*₁ successfully decrypts with error weight wt(**e**₁) = 27 ≤ ℵ = 31.
-- **Scenario 2 (Tier-1 Revocation):** Target user *U*₂ error weight jumps to 39 > 31 (Access Blocked), while legitimate user *U*₁ stays at 31 ≤ 31 (Access Granted).
-- **Scenario 3A (Algebraic Odd Coalition):** Direct sum in GF(256) yields 0 errors in the left 128-byte block and 80-byte attributes, but the revocation sub-block error reaches 43 > 38, defeating list decoding.
-- **Scenario 3B (Homomorphic Odd Coalition):** Base-3 carry overflow in Curve25519 results in 256 / 256 corrupted bytes.
-- **Scenario 4 (Even Coalition):** Unmasked cohort blockers result in 256 / 256 corrupted bytes.
+```text
+=== STEALTH ABBE PROTOTYPE SETUP (Magma Online Calculator) ===
+Building O(1) Short-Interval DLP LUT (Max Z = 13120)...
+Domain & Non-Systematic RS Setup completed in 0.180 sec.
+
+--- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---
+  |W_1 cap W_2| = 4 (<= Delta_int = 4)
+  |W_1 cap W_3| = 4 (<= Delta_int = 4)
+  |W_1 cap W_4| = 4 (<= Delta_int = 4)
+  |W_2 cap W_3| = 4 (<= Delta_int = 4)
+  |W_2 cap W_4| = 4 (<= Delta_int = 4)
+  |W_3 cap W_4| = 4 (<= Delta_int = 4)
+
+Provisioning 4 Cohort Participants via simulated DKG/MPC...
+Provisioning completed in 0.110 sec.
+
+=== SCENARIO 1: BASELINE BROADCAST TO AUTHORIZED COHORT ===
+  [U_1 Authorized] RS Decode: true | Error Weight wt(e_1) = 27 (<= aleph = 31) | Payload Match: true (0.050 sec)
+
+=== SCENARIO 2: TIER-1 INTRA-EPOCH REVOCATION (TARGETING U_2) ===
+  [U_2 REVOKED]    RS Decode: false | Error Weight wt(e_2) = 39 (> aleph = 31) -> ACCESS BLOCKED!
+  [U_1 LEGITIMATE] RS Decode: true  | Error Weight wt(e_1) = 31 (<= aleph = 31) | Payload Match: true
+
+=== SCENARIO 3A: ALGEBRAIC ODD COALITION (T = 3) OVER GF(256) ===
+  Left 128B Error (w, m canceled): 0
+  Semantic Attribute 80B Error:    0 (identical attributes!)
+  Tier-1 Revocation 48B Error:     43 (> J(128,64) = 38 & aleph = 31)
+  Algebraic Coalition RS Decode:   false -> COLLUSION DEFEATED BY TIER-1!
+
+=== SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_1 (BASE-3 CARRY OVERFLOW) ===
+  Total 256B Error Weight (Base-3 Carry Avalanche): 256 / 256 | RS Decode: false
+
+=== SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===
+  Total 256B Error Weight (Unmasked w, m): 255 / 256 | RS Decode: false
+```
 
 ### 📚 Academic Citation
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg)](https://doi.org/10.5281/zenodo.23677112)
 
-If you utilize these scripts in your research,
-please cite the associated archive:
+If you utilize these scripts in your research, please cite the associated archive and preprint:
 
 ```bibtex
 @misc{chmora2026stealthabbe,
-  author       = {Andrey Chmora},
-  title        = {Stealth ABBE: Carry-Free Homomorphic Packing and Blind Reed–Solomon Decoding},
+  author       = {Andrey L. Chmora},
+  title        = {Stealth ABBE: Carry-Free Homomorphic Packing, Key Aggregation and Blind Reed–Solomon Decoding},
   month        = {Oct},
   year         = {2026},
   publisher    = {Zenodo},
   doi          = {10.5281/zenodo.23677112},
-  url          = [https://zenodo.org/badge/DOI/10.5281/zenodo.23677112.svg](https://doi.org/10.5281/zenodo.23677112)
+  url          = {https://doi.org/10.5281/zenodo.23677112}
 }
+```
