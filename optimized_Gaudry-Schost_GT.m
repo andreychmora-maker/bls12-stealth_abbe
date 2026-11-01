@@ -1,5 +1,5 @@
 /* Optimized Gaudry-Schost for Target Group G_T in F_{p^12}^* */
-/* Fixed Tuple Indexing Version */
+/* Fixed While Loop Syntax Version */
 
 clear;
  
@@ -42,8 +42,8 @@ GaudrySchostResolveCollisionGT := function(TargetTag, TameTable, WildTable, orde
             if tc[1] eq wc[1] then // Strict coordinate comparison of Rep
                 Tame_RandNum := tc[2];
                 Wild_RandNum := wc[2];
-                Tame_Orient  := tc[3]; // Исправлено с 4 на 3
-                Wild_Orient  := wc[3]; // Исправлено с 4 на 3
+                Tame_Orient  := tc[3]; 
+                Wild_Orient  := tc[3]; 
                 
                 exp_t := (Tame_Orient eq 0) select Tame_RandNum else -Tame_RandNum;
                 exp_w := (Wild_Orient eq 0) select Wild_RandNum else -Wild_RandNum;
@@ -132,13 +132,7 @@ q := 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001;
 Fp := GF(p);
 P2<x2> := PolynomialRing(Fp);
 Fp2 := ext<Fp | x2^2 + 1>; 
-P6<x6> := PolynomialRing(Fp2);
 Fp12 := ext<Fp2 | 6>; 
-/*
-repeat
-    g_T := Random(Fp12)^((p^12 - 1) div q);
-until g_T ne 1;
-*/
 
 // Instant deterministic generator assignment for g_T without search loops
 // (taking an extension basis element and projecting it into the subgroup of order q)
