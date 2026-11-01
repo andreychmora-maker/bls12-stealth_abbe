@@ -121,7 +121,7 @@ GaudrySchostGT := function(Q, g_T, TameRange, order_q)
     end while;
 end function;
 
-k := 10;
+k := 6;
 
 "-- DOMAIN PARAMETERS SETUP (BLS12-381 Target Group G_T in F_{p^12}) --";
 t := Cputime();
@@ -132,7 +132,16 @@ q := 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001;
 Fp := GF(p);
 P2<x2> := PolynomialRing(Fp);
 Fp2 := ext<Fp | x2^2 + 1>; 
-Fp12 := ext<Fp2 | 6>; 
+
+P6<x6> := PolynomialRing(Fp2);
+
+// Explicitly hardcoded irreducible polynomial of degree 6 over Fp2 
+// (in the form of a binomial x^6 - Beta, where Beta is a non-square and non-cube in Fp2).
+// Hardcoding coefficients eliminates internal search and guarantees zero setup variability.
+Beta := Fp2![2, 1]; // Explicit element in Fp2 represented as coordinates [c0, c1] for c0 + c1*x2
+FixedIrredPoly := x6^6 - Beta; 
+
+Fp12 := ext<Fp2 | FixedIrredPoly>; 
 
 // Instant deterministic generator assignment for g_T without search loops
 // (taking an extension basis element and projecting it into the subgroup of order q)
