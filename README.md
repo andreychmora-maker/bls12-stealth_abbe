@@ -9,7 +9,7 @@
 
 **Stealth ABBE** is a provably secure Attribute-Based Broadcast Encryption framework combining homomorphic ElGamal encryption with non-systematic Reed-Solomon error-correcting codes and a two-tier cryptographic revocation mechanism.
 
-This repository contains the simplified algebraic verification prototype implemented for the **Magma Computational Algebra System** (`stealth_abbe.m`). To enable fast execution in the Magma Online Calculator (~0.5 sec total execution time), the prototype abstracts the bilinear pairing layer (BLS12) into a single-group ElGamal engine over **Curve25519**, focusing on the exact verification of the Base-3 homomorphic pipeline, non-systematic MDS coding, and Tier-1 cover-free revocation geometry.
+This repository contains the full algebraic verification prototype and benchmarking suite implemented for the **Magma Computational Algebra System**. The core verification script (`stealth-abbe-GT.m`) executes over the cyclotomic target subgroup $\mathbb{G}_T \subset \mathbb{F}^*_q, q=p^{12}$ of the **BLS12-381** pairing-friendly elliptic curve, featuring cost-free Frobenius conjugation, carry-free Base-3 homomorphic packing, non-systematic MDS coding, and Tier-1 cover-free revocation. Additionally, `benchmark-GT-LUT-vs-Kangaroo.m` provides an empirical comparison of memory-computation trade-offs for short-interval discrete logarithm extraction.
 
 ---
 
@@ -23,35 +23,44 @@ This repository contains the simplified algebraic verification prototype impleme
    * **Tier-1 (Intra-Epoch Zero-Latency Revocation):** Implements a cover-free family of clean windows *W* of size *w* = 16 bytes within a revocation sub-block (*M* = 48 bytes), with bounded pairwise intersection Δ ≤ 4 bytes and baseline cohort error weight *τ* = 27 bytes. Enables instant user blacklisting via targeted broadcast perturbations.
    * **Tier-2 (Inter-Epoch Hard Reset):** Global cohort blocker (**w**) and session mask (**m**) rotation ensuring long-term cryptographic hygiene and history purging.
 
-3. **Simplified Homomorphic ElGamal Engine (Curve25519):**
-   * Block-wise additive ElGamal aggregation over Curve25519 (*p* = 2²⁵⁵ − 19) using carry-free Base-3 scalar embedding with ternary weights 3⁰, 3¹, ..., 3⁷.
-   * Simulates the split-key DKG invariant (*sk* + *h*) mod *q* = *α* directly in the scalar ring Z/*q*Z, followed by O(1) lookup-table (LUT) short-interval discrete logarithm recovery.
+3. **Cyclotomic ElGamal Engine in $\mathbb{G}_T \subset \mathbb{F}^*_q,q=p^{12}$ (BLS12-381):**
+   * Block-wise additive ElGamal aggregation over BLS12-381 using carry-free Base-3 scalar embedding with ternary weights 3⁰, 3¹, ..., 3⁷ ($\eta = 8$, max scalar $Z = 13120$).
+   * Implements split-key pairing projection cancelled via fast cyclotomic inversion using Frobenius conjugation ($A^{-1} = A^{p^6}$), followed by $O(1)$ lookup-table (LUT) or Kangaroo short-interval discrete logarithm recovery.
 
 4. **Two-Layer Collusion Resistance:**
-   * **Base-3 Carry Avalanche:** Homomorphic aggregation of *T* ≥ 3 ciphertexts in the curve group triggers inter-digit ternary carries (3 = 10₃, 4 = 11₃), causing a catastrophic 256 / 256-byte decoding failure.
+   * **Base-3 Carry Avalanche:** Homomorphic aggregation of *T* ≥ 3 ciphertexts in $\mathbb{G}_T$ triggers inter-digit ternary carries (3 = 10₃, 4 = 11₃), causing a catastrophic 256 / 256-byte decoding failure.
    * **Combinatorial Error Amplification:** Same-attribute odd coalitions (*T* = 3) attempting direct algebraic combination in GF(256) encounter an enforced error weight of ~43.8 bytes > *J*(128, 64) = 38, strictly exceeding both the unique decoding radius and the Johnson list-decoding bound.
 
 ---
 
 ## 🛠️ Repository Structure
 
-- `stealth_abbe.m` — Standalone end-to-end Magma verification script containing:
-  * Curve25519 domain setup and O(1) Short-Interval DLP lookup table (LUT) generator.
+- `stealth-abbe-GT.m` — Standalone end-to-end Magma verification script containing:
+  * BLS12-381 $\mathbb{G}_T \subset \mathbb{F}^*_q, q=p^{12}$ domain setup, Frobenius conjugation, and $O(1)$ Short-Interval DLP lookup table (LUT) generator ($13\,121$ entries).
   * Non-systematic RS [256, 192, 65]₂₅₆ encoder and guarded syndrome decoder.
   * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4).
   * Complete execution scenarios (Authorized decrypt, Tier-1 revocation, Algebraic & Homomorphic Odd Collusion *T* = 3 defeat, Even Collusion *T* = 2 mask annihilation failure).
+
+- `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script evaluating:
+  * Variant 1: Direct $O(1)$ LUT ($13\,121$ entries, $7.61\text{ MB}$ / $7.26\text{ MiB}$).
+  * Variant 2: Distinguished Points / Kangaroo search ($253$ entries, $146.7\text{ KB}$ / $143.3\text{ KiB}$, 51.9× smaller memory footprint).
+  * Head-to-head online extraction timing across a full 256-block RS frame.
 
 ---
 
 ## ⚙️ Getting Started & Verification
 
-To run the reference prototype and verify all security scenarios, open your Magma environment (or the Magma Online Calculator) and run the script:
+To run the reference prototype and verify all security scenarios, open your Magma environment (or the Magma Online Calculator) and execute:
 
 ```magma
-load "stealth_abbe.m";
+load "stealth-abbe-GT.m";
+load "benchmark-GT-LUT-vs-Kangaroo.m";
 ```
 
 ### Expected Output Summary:
+
+`stealth-abbe-GT.m`:
+
 ```text
 === STEALTH ABBE PROTOTYPE SETUP (Magma Online Calculator) ===
 Building O(1) Short-Interval DLP LUT (Max Z = 13120)...
@@ -86,6 +95,40 @@ Provisioning completed in 0.110 sec.
 
 === SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===
   Total 256B Error Weight (Unmasked w, m): 255 / 256 | RS Decode: false
+```
+`benchmark-GT-LUT-vs-Kangaroo.m`:
+
+```text
+=== INITIALIZING BLS12-381 TARGET GROUP G_T subset F_{p^12}^* ===
+Group G_T initialized in 0.190 sec (Max scalar Z = 13120).
+
+=== VARIANT 1: DIRECT O(1) LUT IN F_{p^12}^* ===
+  Precomputation Time:   0.540 sec
+  Stored Table Entries:  13121 entries
+  Memory Footprint:      7.61 MB (7.26 MiB)
+
+=== VARIANT 2: DISTINGUISHED POINTS (KANGAROO) IN F_{p^12}^* ===
+  Precomputation Time:   0.580 sec
+  Stored DP Entries:     253 entries (Theoretical 2*sqrt(13120) ~ 229)
+  Memory Footprint:      146.7 KB (143.3 KiB)
+
+=== GENERATING 256 RANDOM TEST TARGETS g_T^(z_t) IN [0, 13120] ===
+
+================================================================================
+   SUMMARY BENCHMARK: DLP IN F_{p^12}^* (eta = 8, Z in [0, 13120], 256 Blocks)
+================================================================================
+Metric                           | Direct O(1) LUT      | Kangaroo (DP Variant)
+--------------------------------------------------------------------------------
+Stored Table Entries             | 13121                | 253
+Memory Footprint (Decimal SI)    | 7.61 MB              | 146.7 KB
+Memory Footprint (Binary IEC)    | 7.26 MiB             | 143.3 KiB
+Memory Reduction Factor          | 1.0x (Baseline)      | 51.9x smaller
+Offline Precomputation Time      | 0.540 sec            | 0.580 sec
+Avg F_{p^12} Muls / Block        | 0 (O(1) Hash Lookup) | 123.8 muls
+Online Time per Block (ms)       | 0.0020 ms            | 5.625 ms
+Online Time per 256B Frame (sec) | 0.0005 sec           | 1.440 sec
+Exact Recovery (256/256 blocks)  | true                 | true
+================================================================================
 ```
 
 ### 📚 Academic Citation
