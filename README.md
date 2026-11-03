@@ -140,7 +140,7 @@ If you utilize these scripts in your research, please cite the associated archiv
 ```bibtex
 @misc{chmora2026stealthabbe,
   author       = {Andrey L. Chmora},
-  title        = {Stealth ABBE: Carry-Free Homomorphic Packing, Key Aggregation and Blind Reed–Solomon Decoding},
+  title        = {Stealth ABBE: Carry-Free Homomorphic Packing and Blind Reed–Solomon Decoding},
   month        = {Oct},
   year         = {2026},
   publisher    = {Zenodo},
