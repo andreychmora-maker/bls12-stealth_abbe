@@ -39,13 +39,13 @@ Z_Int := Integers();
 eta := 8;
 MaxVal := 2 * (3^eta - 1);   // 13120
 N_blocks := 256;             // 1 full RS [256, 192, 65]_256 frame at eta = 8
-BytesPerFullEntry   := 580;  // 12 * 48B (F_{p^12}) + 4B scalar index
+BytesPerFullEntry   := 578;  // 12 * 48B (F_{p^12}) + 2B (uint16 scalar index)
 BytesPerPrefixEntry := 10;   // 8B (64-bit canonical prefix) + 2B (uint16 scalar index)
 Mod64 := 2^64;
 printf "Group G_T initialized in %.3o sec (Max scalar Z = %o).\n\n", Cputime(t0), MaxVal;
 
 /* --------------------------------------------------------------------------
-   PART 2: VARIANT 1 - DIRECT UNCOMPRESSED O(1) LUT (13,121 ENTRIES, 580B/ENTRY)
+   PART 2: VARIANT 1 - DIRECT UNCOMPRESSED O(1) LUT (13,121 ENTRIES, 578B/ENTRY)
    -------------------------------------------------------------------------- */
 BuildDirectLUT := function(g_T, MaxVal)
     Table := AssociativeArray();
@@ -67,7 +67,7 @@ mem_direct_MB       := num_direct_entries * BytesPerFullEntry / 1000000.0;
 mem_direct_MiB      := num_direct_entries * BytesPerFullEntry / 1048576.0;
 
 printf "  Precomputation Time:   %.3o sec\n", time_direct_precomp;
-printf "  Stored Table Entries:  %o entries (580 B/entry)\n", num_direct_entries;
+printf "  Stored Table Entries:  %o entries (578 B/entry: 576B F_{p^12} + 2B index)\n", num_direct_entries;
 printf "  Memory Footprint:      %.2o MB (%.2o MiB)\n", mem_direct_MB, mem_direct_MiB;
 
 /* --------------------------------------------------------------------------
@@ -245,7 +245,7 @@ printf "Metric                           | Direct Full LUT      | 64-Bit Prefix 
 printf "--------------------------------------------------------------------------------------------------------\n";
 printf "Stored Table Entries             | %-20o | %-20o | %-20o\n",
        num_direct_entries, num_pref_entries, num_dp_entries;
-printf "Entry Size (Bytes)               | 580 B (Full F_p^12)  | 10 B (8B Key+2B Idx) | 580 B (Full F_p^12)\n";
+printf "Entry Size (Bytes)               | 578 B (Full F_p^12)  | 10 B (8B Key+2B Idx) | 578 B (Full F_p^12)\n";
 printf "Memory Footprint (Decimal SI)    | %.2o MB              | %.1o KB             | %.1o KB\n",
        mem_direct_MB, mem_pref_KB, mem_dp_KB;
 printf "Memory Footprint (Binary IEC)    | %.2o MiB             | %.1o KiB            | %.1o KiB\n",
