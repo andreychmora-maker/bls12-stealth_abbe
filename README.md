@@ -10,7 +10,7 @@ This repository contains the full algebraic verification prototype and benchmark
 
 ### Benchmark: Short-Interval DLP Extraction in $\mathbb{G}_T \subset \mathbb{F}^*_q,q=p^{12}$
 
-Evaluated on BLS12-381 for $\eta = 8$ ($Z \in [0, 13\,120]$, $N_{\mathrm{blk}} = 256$ blocks per $\mathcal{C}_{RS}[256, 192, 65]_{256}$ broadcast frame):
+Evaluated on BLS12-381 for $\eta = 8$ ($Z \in [0, 13\,120]$, $N_{\mathrm{blk}} = 256$ blocks per $\mathcal{C}_{RS}$[256, 192, 65]₂₅₆ broadcast frame):
 
 | Metric | Variant 1: Direct Full LUT | Variant 2: 64-Bit Prefix LUT (L1/L2 Cache) | Variant 3: Kangaroo (Distinguished Points) |
 | :--- | :---: | :---: | :---: |
