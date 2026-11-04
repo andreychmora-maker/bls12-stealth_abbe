@@ -57,8 +57,8 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
   * Complete execution scenarios (Authorized decrypt, Tier-1 revocation, Algebraic & Homomorphic Odd Collusion *T* = 3 defeat, Even Collusion *T* = 2 mask annihilation failure).
 
 - `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script evaluating:
-  * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 7.61 MB / 7.26 MiB).
-  * Variant 2: Compressed 64-bit prefix <i>O</i>(1) LUT (13,121 entries, 131.2 KB / 128.1 KiB, 58.0× smaller memory footprint, L1/L2 cache-resident).
+  * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 7.58 MB / 7.23 MiB).
+  * Variant 2: Compressed 64-bit prefix <i>O</i>(1) LUT (13,121 entries, 131.2 KB / 128.1 KiB, 57.8× smaller memory footprint, L1/L2 cache-resident).
   * Variant 3: Distinguished Points / Kangaroo search (244 entries, 141.5 KB / 138.2 KiB, 53.8× smaller memory footprint).
   * Head-to-head online extraction timing across a full 256-block RS frame.
 
@@ -143,9 +143,9 @@ Metric                           | Direct Full LUT      | 64-Bit Prefix LUT    |
 --------------------------------------------------------------------------------------------------------
 Stored Table Entries             | 13121                | 13121                | 244
 Entry Size (Bytes)               | 580 B (Full F_p^12)  | 10 B (8B Key+2B Idx) | 580 B (Full F_p^12)
-Memory Footprint (Decimal SI)    | 7.61 MB              | 131.2 KB             | 141.5 KB
-Memory Footprint (Binary IEC)    | 7.26 MiB             | 128.1 KiB            | 138.2 KiB
-Memory Reduction vs. Full LUT    | 1.0x (Baseline)      | 58.0x smaller        | 53.8x smaller
+Memory Footprint (Decimal SI)    | 7.58 MB              | 131.2 KB             | 141.5 KB
+Memory Footprint (Binary IEC)    | 7.23 MiB             | 128.1 KiB            | 138.2 KiB
+Memory Reduction vs. Full LUT    | 1.0x (Baseline)      | 57.8x smaller        | 53.8x smaller
 Offline Precomputation Time      | 0.540 sec            | 0.590 sec            | 0.580 sec
 Avg F_{p^12} Muls / Block        | 0 (O(1) Hash Lookup) | 0 (O(1) Prefix Hash) | 93.0 muls
 Online Time per Block (ms)       | 0.0020 ms            | 0.0039 ms            | 4.258 ms
