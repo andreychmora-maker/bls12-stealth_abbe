@@ -197,7 +197,7 @@ end for;
 TestElements := [ InvSample[TestScalars[t]] : t in [1..N_blocks] ];
 
 // 1. Benchmark Direct Uncompressed O(1) LUT over 256 blocks
-N_iters_lut := 20;
+N_iters_lut := 10000;
 t_dir_eval := Cputime();
 rec_direct := [ 0 : t in [1..N_blocks] ];
 for iter in [1..N_iters_lut] do
