@@ -14,7 +14,7 @@ Evaluated on BLS12-381 for $\eta = 8$ ($Z \in [0, 13120]$, $N_{\mathrm{blk}} = 2
 
 | Metric | Variant 1: Direct Full LUT | Variant 2: 64-Bit Prefix LUT (L1/L2 Cache) | Variant 3: Kangaroo (Distinguished Points) |
 | :--- | :---: | :---: | :---: |
-| **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `244` ($D_{\mathrm{mod}} = 57$) |
+| **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `244` ($D_{mod} = 57$) |
 | **Entry Size** | `580 B` (Full $\mathbb{F}_{p^{12}}$) | **`10 B`** (`8B` Key + `2B` Index) | `580 B` (Full $\mathbb{F}_{p^{12}}$) |
 | **Memory Footprint (SI / IEC)** | `7.61 MB` (`7.26 MiB`) | **`131.2 KB` (`128.1 KiB`)** | `141.5 KB` (`138.2 KiB`) |
 | **Memory Reduction Factor** | `1.0x` (Baseline) | **`58.0x smaller`** | `53.8x smaller` |
