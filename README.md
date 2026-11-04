@@ -136,38 +136,22 @@ Group G_T initialized in 0.190 sec (Max scalar Z = 13120).
 
 === GENERATING 256 RANDOM TEST TARGETS g_T^(z_t) IN [0, 13120] ===
 
-===============================================================================\
-=========================
-          SUMMARY BENCHMARK: DLP IN F_{p^12}^* (eta = 8, Z in [0, 13120], 256
-Blocks = 1 Frame)
-===============================================================================\
-=========================
-Metric                           | Direct Full LUT      | 64-Bit Prefix LUT    |
-Kangaroo (DP Variant)
--------------------------------------------------------------------------------\
--------------------------
-Stored Table Entries             | 13121                | 13121                |
-244
-Entry Size (Bytes)               | 580 B (Full F_p^12)  | 10 B (8B Key+2B Idx) |
-580 B (Full F_p^12)
-Memory Footprint (Decimal SI)    | 7.61 MB              | 131.2 KB             |
-141.5 KB
-Memory Footprint (Binary IEC)    | 7.26 MiB             | 128.1 KiB            |
-138.2 KiB
-Memory Reduction vs. Full LUT    | 1.0x (Baseline)      | 58.0x smaller        |
-53.8x smaller
-Offline Precomputation Time      | 0.540 sec            | 0.590 sec            |
-0.580 sec
-Avg F_{p^12} Muls / Block        | 0 (O(1) Hash Lookup) | 0 (O(1) Prefix Hash) |
-93.0 muls
-Online Time per Block (ms)       | 0.0020 ms            | 0.0039 ms            |
-4.258 ms
-Online Time per 256B Frame (sec) | 0.0005 sec           | 0.0010 sec           |
-1.090 sec
-Exact Recovery (256/256 blocks)  | true                 | true                 |
-true
-===============================================================================\
-=========================
+========================================================================================================
+          SUMMARY BENCHMARK: DLP IN F_{p^12}^* (eta = 8, Z in [0, 13120], 256 Blocks = 1 Frame)
+========================================================================================================
+Metric                           | Direct Full LUT      | 64-Bit Prefix LUT    | Kangaroo (DP Variant)
+--------------------------------------------------------------------------------------------------------
+Stored Table Entries             | 13121                | 13121                | 244
+Entry Size (Bytes)               | 580 B (Full F_p^12)  | 10 B (8B Key+2B Idx) | 580 B (Full F_p^12)
+Memory Footprint (Decimal SI)    | 7.61 MB              | 131.2 KB             | 141.5 KB
+Memory Footprint (Binary IEC)    | 7.26 MiB             | 128.1 KiB            | 138.2 KiB
+Memory Reduction vs. Full LUT    | 1.0x (Baseline)      | 58.0x smaller        | 53.8x smaller
+Offline Precomputation Time      | 0.540 sec            | 0.590 sec            | 0.580 sec
+Avg F_{p^12} Muls / Block        | 0 (O(1) Hash Lookup) | 0 (O(1) Prefix Hash) | 93.0 muls
+Online Time per Block (ms)       | 0.0020 ms            | 0.0039 ms            | 4.258 ms
+Online Time per 256B Frame (sec) | 0.0005 sec           | 0.0010 sec           | 1.090 sec
+Exact Recovery (256/256 blocks)  | true                 | true                 | true
+========================================================================================================
 ```
 
 ### 📚 Academic Citation
