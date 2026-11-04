@@ -18,8 +18,8 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
 | :--- | :---: | :---: | :---: |
 | **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `244` (<i>D</i><sub>mod</sub> = 57) |
 | **Entry Size** | `580 B` (Full 𝔽<sub><i>p</i><sup>12</sup></sub>) | **`10 B`** (`8B` Key + `2B` Index) | `580 B` (Full 𝔽<sub><i>p</i><sup>12</sup></sub>) |
-| **Memory Footprint (SI / IEC)** | `7.61 MB` (`7.26 MiB`) | **`131.2 KB` (`128.1 KiB`)** | `141.5 KB` (`138.2 KiB`) |
-| **Memory Reduction Factor** | `1.0x` (Baseline) | **`58.0x smaller`** | `53.8x smaller` |
+| **Memory Footprint (SI / IEC)** | `7.58 MB` (`7.23 MiB`) | **`131.2 KB` (`128.1 KiB`)** | `141.5 KB` (`138.2 KiB`) |
+| **Memory Reduction Factor** | `1.0x` (Baseline) | **`57.8x smaller`** | `53.8x smaller` |
 | **Offline Precomputation Time** | `0.540 sec` | `0.590 sec` | `0.580 sec` |
 | **Avg. 𝔽<sub><i>p</i><sup>12</sup></sub> Muls / Block** | `0` (<i>O</i>(1) Lookup) | **`0` (<i>O</i>(1) Prefix Lookup)** | `93.0 muls` |
 | **Online Time per Block** | `0.0020 ms` | **`0.0039 ms`** | `4.258 ms` |
