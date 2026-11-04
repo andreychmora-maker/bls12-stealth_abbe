@@ -9,25 +9,23 @@
 **Stealth ABBE** is a provably secure Attribute-Based Broadcast Encryption framework combining homomorphic ElGamal encryption with non-systematic Reed-Solomon error-correcting codes and a two-tier cryptographic revocation mechanism.
 
 This repository contains the full algebraic verification prototype and benchmarking suite implemented for the **Magma Computational Algebra System**. The core verification script (`stealth-abbe-GT.m`) executes over the cyclotomic target subgroup 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup> of the **BLS12-381** pairing-friendly elliptic curve, featuring cost-free Frobenius conjugation, carry-free Base-3 homomorphic packing, non-systematic MDS coding, and Tier-1 cover-free revocation. Additionally, `benchmark-GT-LUT-vs-Kangaroo.m` provides an empirical comparison of memory-computation trade-offs for short-interval discrete logarithm extraction.
-
 ### Benchmark: Short-Interval DLP Extraction in 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup>
 
-Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>blk</sub> = 256 blocks per <i>C</i><sub>RS</sub>[256, 192, 65]<sub>256</sub> broadcast frame):
+Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>blk</sub> = 256 blocks per <i>C</i><sub>RS</sub>[256, 192, 65]<sub>256</sub> broadcast frame, averaged over 10,000 trials):
 
 | Metric | Variant 1: Direct Full LUT | Variant 2: 64-Bit Prefix LUT (L1/L2 Cache) | Variant 3: Kangaroo (Distinguished Points) |
 | :--- | :---: | :---: | :---: |
-| **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `244` (<i>D</i><sub>mod</sub> = 57) |
-| **Entry Size** | `580 B` (Full 𝔽<sub><i>p</i><sup>12</sup></sub>) | **`10 B`** (`8B` Key + `2B` Index) | `580 B` (Full 𝔽<sub><i>p</i><sup>12</sup></sub>) |
-| **Memory Footprint (SI / IEC)** | `7.58 MB` (`7.23 MiB`) | **`131.2 KB` (`128.1 KiB`)** | `141.5 KB` (`138.2 KiB`) |
-| **Memory Reduction Factor** | `1.0x` (Baseline) | **`57.8x smaller`** | `53.8x smaller` |
-| **Offline Precomputation Time** | `0.540 sec` | `0.590 sec` | `0.580 sec` |
-| **Avg. 𝔽<sub><i>p</i><sup>12</sup></sub> Muls / Block** | `0` (<i>O</i>(1) Lookup) | **`0` (<i>O</i>(1) Prefix Lookup)** | `93.0 muls` |
-| **Online Time per Block** | `0.0020 ms` | **`0.0039 ms`** | `4.258 ms` |
-| **Online Time per 256B Frame** | `0.0005 sec` | **`0.0010 sec`** | `1.090 sec` |
+| **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `242` (<i>D</i><sub>mod</sub> = 57) |
+| **Entry Size** | `578 B` (`576B` 𝔽<sub><i>p</i><sup>12</sup></sub> + `2B` Index) | **`10 B`** (`8B` Key + `2B` Index) | `578 B` (`576B` 𝔽<sub><i>p</i><sup>12</sup></sub> + `2B` Index) |
+| **Memory Footprint (SI / IEC)** | `7.58 MB` (`7.23 MiB`) | **`131.2 KB` (`128.1 KiB`)** | `139.9 KB` (`136.6 KiB`) |
+| **Memory Reduction Factor** | `1.0x` (Baseline) | **`57.8x smaller`** | `54.2x smaller` |
+| **Offline Precomputation Time** | `0.540 sec` | `0.580 sec` | `0.580 sec` |
+| **Avg. 𝔽<sub><i>p</i><sup>12</sup></sub> Muls / Block** | `0` (<i>O</i>(1) Hash Lookup) | **`0` (<i>O</i>(1) Prefix Hash)** | `112.5 muls` |
+| **Online Time per Block** | `0.0010 ms` | **`0.0044 ms`** | `5.039 ms` |
+| **Online Time per 256B Frame** | `0.0003 sec` | **`0.0011 sec`** | `1.290 sec` |
 | **Exact Frame Recovery** | `true` (`256/256`) | `true` (`256/256`) | `true` (`256/256`) |
 
 ---
-
 ## 🚀 Key Architectural Features
 
 1. **Non-Systematic Reed-Solomon Puncturing Defense (Rate *R* = 0.75):**
@@ -47,7 +45,6 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
    * **Combinatorial Error Amplification:** Same-attribute odd coalitions (*T* = 3) attempting direct algebraic combination in GF(256) encounter an enforced error weight of ~43.8 bytes > *J*(128, 64) = 38, strictly exceeding both the unique decoding radius and the Johnson list-decoding bound.
 
 ---
-
 ## 🛠️ Repository Structure
 
 - `stealth-abbe-GT.m` — Standalone end-to-end Magma verification script containing:
@@ -63,7 +60,6 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
   * Head-to-head online extraction timing across a full 256-block RS frame.
 
 ---
-
 ## ⚙️ Getting Started & Verification
 
 To run the reference prototype and verify all security scenarios, open your Magma environment (or the Magma Online Calculator) and execute:
@@ -120,19 +116,19 @@ Group G_T initialized in 0.190 sec (Max scalar Z = 13120).
 
 === VARIANT 1: DIRECT UNCOMPRESSED O(1) LUT IN F_{p^12}^* ===
   Precomputation Time:   0.540 sec
-  Stored Table Entries:  13121 entries (580 B/entry)
-  Memory Footprint:      7.61 MB (7.26 MiB)
+  Stored Table Entries:  13121 entries (578 B/entry: 576B F_{p^12} + 2B index)
+  Memory Footprint:      7.58 MB (7.23 MiB)
 
 === VARIANT 2: COMPRESSED 64-BIT PREFIX O(1) LUT (L1/L2 CACHE-RESIDENT) ===
-  Precomputation Time:   0.590 sec
+  Precomputation Time:   0.580 sec
   Stored Table Entries:  13121 entries (10 B/entry: 8B prefix + 2B index)
   64-Bit Collision-Free: true (Unique prefixes: 13121 / 13121)
   Memory Footprint:      131.2 KB (128.1 KiB)
 
 === VARIANT 3: DISTINGUISHED POINTS (KANGAROO) IN F_{p^12}^* ===
   Precomputation Time:   0.580 sec
-  Stored DP Entries:     244 entries (Theoretical 2*sqrt(13120) ~ 229)
-  Memory Footprint:      141.5 KB (138.2 KiB)
+  Stored DP Entries:     242 entries (Theoretical 2*sqrt(13120) ~ 229)
+  Memory Footprint:      139.9 KB (136.6 KiB)
 
 === GENERATING 256 RANDOM TEST TARGETS g_T^(z_t) IN [0, 13120] ===
 
@@ -141,15 +137,15 @@ Group G_T initialized in 0.190 sec (Max scalar Z = 13120).
 ========================================================================================================
 Metric                           | Direct Full LUT      | 64-Bit Prefix LUT    | Kangaroo (DP Variant)
 --------------------------------------------------------------------------------------------------------
-Stored Table Entries             | 13121                | 13121                | 244
-Entry Size (Bytes)               | 580 B (Full F_p^12)  | 10 B (8B Key+2B Idx) | 580 B (Full F_p^12)
-Memory Footprint (Decimal SI)    | 7.58 MB              | 131.2 KB             | 141.5 KB
-Memory Footprint (Binary IEC)    | 7.23 MiB             | 128.1 KiB            | 138.2 KiB
-Memory Reduction vs. Full LUT    | 1.0x (Baseline)      | 57.8x smaller        | 53.8x smaller
-Offline Precomputation Time      | 0.540 sec            | 0.590 sec            | 0.580 sec
-Avg F_{p^12} Muls / Block        | 0 (O(1) Hash Lookup) | 0 (O(1) Prefix Hash) | 93.0 muls
-Online Time per Block (ms)       | 0.0020 ms            | 0.0039 ms            | 4.258 ms
-Online Time per 256B Frame (sec) | 0.0005 sec           | 0.0010 sec           | 1.090 sec
+Stored Table Entries             | 13121                | 13121                | 242
+Entry Size (Bytes)               | 578 B (Full F_p^12)  | 10 B (8B Key+2B Idx) | 578 B (Full F_p^12)
+Memory Footprint (Decimal SI)    | 7.58 MB              | 131.2 KB             | 139.9 KB
+Memory Footprint (Binary IEC)    | 7.23 MiB             | 128.1 KiB            | 136.6 KiB
+Memory Reduction vs. Full LUT    | 1.0x (Baseline)      | 57.8x smaller        | 54.2x smaller
+Offline Precomputation Time      | 0.540 sec            | 0.580 sec            | 0.580 sec
+Avg F_{p^12} Muls / Block        | 0 (O(1) Hash Lookup) | 0 (O(1) Prefix Hash) | 112.5 muls
+Online Time per Block (ms)       | 0.0010 ms            | 0.0044 ms            | 5.039 ms
+Online Time per 256B Frame (sec) | 0.0003 sec           | 0.0011 sec           | 1.290 sec
 Exact Recovery (256/256 blocks)  | true                 | true                 | true
 ========================================================================================================
 ```
