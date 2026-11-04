@@ -47,18 +47,19 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
 ---
 ## 🛠️ Repository Structure
 
+```markdown
 - `stealth-abbe-GT.m` — Standalone end-to-end Magma verification script containing:
   * BLS12-381 𝔾<sub><i>T</i></sub> ⊂ 𝔽<sub><i>p</i><sup>12</sup></sub><sup>*</sup> domain setup, Frobenius conjugation, and <i>O</i>(1) Short-Interval DLP lookup table (LUT) generator (13,121 entries).
   * Non-systematic RS [256, 192, 65]<sub>256</sub> encoder and guarded syndrome decoder.
   * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4).
   * Complete execution scenarios (Authorized decrypt, Tier-1 revocation, Algebraic & Homomorphic Odd Collusion *T* = 3 defeat, Even Collusion *T* = 2 mask annihilation failure).
 
-- `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script evaluating:
-  * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 7.58 MB / 7.23 MiB).
-  * Variant 2: Compressed 64-bit prefix <i>O</i>(1) LUT (13,121 entries, 131.2 KB / 128.1 KiB, 57.8× smaller memory footprint, L1/L2 cache-resident).
-  * Variant 3: Distinguished Points / Kangaroo search (244 entries, 141.5 KB / 138.2 KiB, 53.8× smaller memory footprint).
+- `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script (10,000 trials) evaluating:
+  * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 578 B/entry, 7.58 MB / 7.23 MiB).
+  * Variant 2: Compressed 64-bit prefix <i>O</i>(1) LUT (13,121 entries, 10 B/entry, 131.2 KB / 128.1 KiB, 57.8× smaller memory footprint, L1/L2 cache-resident).
+  * Variant 3: Distinguished Points / Kangaroo search (242 entries, 578 B/entry, 139.9 KB / 136.6 KiB, 54.2× smaller memory footprint).
   * Head-to-head online extraction timing across a full 256-block RS frame.
-
+```
 ---
 ## ⚙️ Getting Started & Verification
 
