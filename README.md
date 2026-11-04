@@ -7,19 +7,16 @@
 [![Code Rate](https://img.shields.io/badge/Code%20Rate-R%3D0.75-green.svg)]()
 
 This repository contains the full algebraic verification prototype and benchmarking suite implemented for the **Magma Computational Algebra System**. The core verification script (`stealth-abbe-GT.m`) executes over the cyclotomic target subgroup $\mathbb{G}_T \subset \mathbb{F}^*_q, q=p^{12}$ of the **BLS12-381** pairing-friendly elliptic curve, featuring cost-free Frobenius conjugation, carry-free Base-3 homomorphic packing, non-systematic MDS coding, and Tier-1 cover-free revocation. Additionally, `benchmark-GT-LUT-vs-Kangaroo.m` provides an empirical comparison of memory-computation trade-offs for short-interval discrete logarithm extraction.
-
-### Benchmark: Short-Interval DLP Extraction in $\mathbb{G}_T \subset \mathbb{F}^*_q,q=p^{12}$
-
-Evaluated on BLS12-381 for $\eta = 8$ ($Z \in [0, 13120]$, $N_{\mathrm{blk}} = 256$ blocks per $\mathcal{C}_{RS}$[256, 192, 65]₂₅₆ broadcast frame):
+Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>blk</sub> = 256 blocks per <i>C</i><sub>RS</sub>[256, 192, 65]<sub>256</sub> broadcast frame):
 
 | Metric | Variant 1: Direct Full LUT | Variant 2: 64-Bit Prefix LUT (L1/L2 Cache) | Variant 3: Kangaroo (Distinguished Points) |
 | :--- | :---: | :---: | :---: |
-| **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `244` ($D_{\mathrm{mod}}=57$) |
-| **Entry Size** | `580 B` (Full $\mathbb{F}_q, q=p^{12}$) | **`10 B`** (`8B` Key + `2B` Index) | `580 B` (Full $\mathbb{F}_q, q=p^{12}$) |
+| **Stored Table Entries** | `13,121` | `13,121` (Collision-free) | `244` (<i>D</i><sub>mod</sub> = 57) |
+| **Entry Size** | `580 B` (Full 𝔽<sub><i>p</i><sup>12</sup></sub>) | **`10 B`** (`8B` Key + `2B` Index) | `580 B` (Full 𝔽<sub><i>p</i><sup>12</sup></sub>) |
 | **Memory Footprint (SI / IEC)** | `7.61 MB` (`7.26 MiB`) | **`131.2 KB` (`128.1 KiB`)** | `141.5 KB` (`138.2 KiB`) |
 | **Memory Reduction Factor** | `1.0x` (Baseline) | **`58.0x smaller`** | `53.8x smaller` |
 | **Offline Precomputation Time** | `0.540 sec` | `0.590 sec` | `0.580 sec` |
-| **Avg. $\mathbb{F}_{p^{12}}$ Muls / Block** | `0` ($\mathcal{O}(1)$ Lookup) | **`0` ($\mathcal{O}(1)$ Prefix Lookup)** | `93.0 muls` |
+| **Avg. 𝔽<sub><i>p</i><sup>12</sup></sub> Muls / Block** | `0` (<i>O</i>(1) Lookup) | **`0` (<i>O</i>(1) Prefix Lookup)** | `93.0 muls` |
 | **Online Time per Block** | `0.0020 ms` | **`0.0039 ms`** | `4.258 ms` |
 | **Online Time per 256B Frame** | `0.0005 sec` | **`0.0010 sec`** | `1.090 sec` |
 | **Exact Frame Recovery** | `true` (`256/256`) | `true` (`256/256`) | `true` (`256/256`) |
