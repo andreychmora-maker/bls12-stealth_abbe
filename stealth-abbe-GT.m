@@ -259,7 +259,7 @@ printf "Building O(1) Short-Interval DLP LUT in F_{p^12}^* (Max Z = %o, Entries 
 t_lut := Cputime();
 LUT := BuildGTDLPTable(g_T, MaxWeightSum4);
 printf "LUT in F_{p^12}^* constructed in %.3o sec (Uncompressed footprint: %.2o MB / %.2o MiB).\n",
-       Cputime(t_lut), (MaxWeightSum4 + 1) * 580 / 1000000.0, (MaxWeightSum4 + 1) * 580 / 1048576.0;
+       Cputime(t_lut), (MaxWeightSum4 + 1) * 578 / 1000000.0, (MaxWeightSum4 + 1) * 578 / 1048576.0;
 printf "Total Domain & Non-Systematic RS Setup completed in %.3o sec.\n", Cputime(t_start);
 
 // Vectorized ElGamal encryption projected into G_T sharing ephemeral randomness r_eph
