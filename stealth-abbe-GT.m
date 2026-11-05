@@ -486,7 +486,8 @@ printf "  [Static Tier-1 without xi_i] Patched U_2 RS Decode: %o | Key Leaked: %
 printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===\n";
 M_rev_sc   := 15;
 tau_scoped := 9;  // Exact complement size: M_rev_sc - |W_j| = 15 - 6 = 9
-wt_xi      := 20; // Strictly above floor(aleph/2) = 15, within aleph - w_pol = 31 - 11 = 20
+wt_xi      := 22; // Strictly above floor(aleph/2) = 15, within aleph - w_pol = 31 - 9 = 22
+
 
 ScopedWindows := [
     {1, 2, 3, 4, 5, 6},    // W_1 (|W_1| = 6)
