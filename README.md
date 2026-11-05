@@ -50,10 +50,9 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
 - `stealth-abbe-GT.m` — Standalone end-to-end Magma verification script containing:
   * BLS12-381 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup> domain setup, Frobenius conjugation, and <i>O</i>(1) Short-Interval DLP lookup table (LUT) generator (13,121 entries).
   * Non-systematic RS [256, 192, 65]<sub>256</sub> encoder and guarded syndrome decoder.
-  * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4).
   * Monolithic KEM encapsulation and verification functions (κ̂, κ̃, B, σ, Σ).
   * Stream-seeded infinite PRG generator for policy-scoped ephemeral blind noise (ξ<sub>i</sub>).
-  * Cover-free clean window geometry verifier and complete execution scenarios (Authorized decrypt, Tier-1 quarantine & state-caching defense, inter-frame addition block, full kappa_i compromise resilience, clean policy fast-path).
+  * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4) and complete execution scenarios (Authorized decrypt, Tier-1 quarantine & state-caching defense, inter-frame addition block, full κ<sub>i</sub> compromise resilience, clean policy fast-path).
   * Complete execution scenarios (Authorized decrypt, Tier-1 revocation, Algebraic & Homomorphic Odd Collusion *T* = 3 defeat, Even Collusion *T* = 2 mask annihilation failure).
 
 - `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script (10,000 trials) evaluating:
