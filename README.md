@@ -51,6 +51,9 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
   * BLS12-381 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup> domain setup, Frobenius conjugation, and <i>O</i>(1) Short-Interval DLP lookup table (LUT) generator (13,121 entries).
   * Non-systematic RS [256, 192, 65]<sub>256</sub> encoder and guarded syndrome decoder.
   * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4).
+  * Monolithic KEM encapsulation and verification functions (κ̂, κ̃, B, σ, Σ).
+  * Stream-seeded infinite PRG generator for policy-scoped ephemeral blind noise (ξ<sub>i</sub>).
+  * Cover-free clean window geometry verifier and complete execution scenarios (Authorized decrypt, Tier-1 quarantine & state-caching defense, inter-frame addition block, full kappa_i compromise resilience, clean policy fast-path).
   * Complete execution scenarios (Authorized decrypt, Tier-1 revocation, Algebraic & Homomorphic Odd Collusion *T* = 3 defeat, Even Collusion *T* = 2 mask annihilation failure).
 
 - `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script (10,000 trials) evaluating:
@@ -74,9 +77,10 @@ load "benchmark-GT-LUT-vs-Kangaroo.m";
 `stealth-abbe-GT.m`:
 
 ```text
-=== STEALTH ABBE PROTOTYPE SETUP (Magma Online Calculator) ===
-Building O(1) Short-Interval DLP LUT (Max Z = 13120)...
-Domain & Non-Systematic RS Setup completed in 0.180 sec.
+=== STEALTH ABBE PROTOTYPE SETUP IN F*_{p^12} (BLS12-381) ===
+Building O(1) Short-Interval DLP LUT in F*_{p^12} (Max Z = 13120, Entries = 13121)...
+LUT in F*_{p^12} constructed in 0.550 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
+Total Domain & Non-Systematic RS Setup completed in 0.740 sec.
 
 --- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---
   |W_1 cap W_2| = 4 (<= Delta_int = 4)
@@ -87,14 +91,15 @@ Domain & Non-Systematic RS Setup completed in 0.180 sec.
   |W_3 cap W_4| = 4 (<= Delta_int = 4)
 
 Provisioning 4 Cohort Participants via simulated DKG/MPC...
-Provisioning completed in 0.110 sec.
+Provisioning completed in 0.510 sec.
 
-=== SCENARIO 1: BASELINE BROADCAST TO AUTHORIZED COHORT ===
-  [U_1 Authorized] RS Decode: true | Error Weight wt(e_1) = 27 (<= aleph = 31) | Payload Match: true (0.050 sec)
+=== SCENARIO 1: BASELINE BROADCAST TO AUTHORIZED COHORT (MONOLITHIC KEM) ===
+  [U_1 Authorized] RS Decode: true | wt(e_1) = 27 (<= aleph = 31) | KEM Digest & Schnorr Sig Valid: true | Key Match: true (0.180 sec)
+  [U_2 Pre-Revoke] RS Decode: true | wt(e_2) = 27 | U_2 caches its own error vector e_U2 (wt = 27)
 
-=== SCENARIO 2: TIER-1 INTRA-EPOCH REVOCATION (TARGETING U_2) ===
-  [U_2 REVOKED]    RS Decode: false | Error Weight wt(e_2) = 39 (> aleph = 31) -> ACCESS BLOCKED!
-  [U_1 LEGITIMATE] RS Decode: true  | Error Weight wt(e_1) = 31 (<= aleph = 31) | Payload Match: true
+=== SCENARIO 2: TIER-1 INTRA-EPOCH REVOCATION (NAIVE U_2 WITHOUT CACHING) ===
+  [U_2 REVOKED (Stateless)] RS Decode: false | Error Weight wt(e_2) = 39 (> aleph = 31) -> ACCESS BLOCKED!
+  [U_1 LEGITIMATE]          RS Decode: true  | Error Weight wt(e_1) = 31 (<= aleph = 31) | Payload Match: true
 
 === SCENARIO 3A: ALGEBRAIC ODD COALITION (T = 3) OVER GF(256) ===
   Left 128B Error (w, m canceled): 0
@@ -102,11 +107,44 @@ Provisioning completed in 0.110 sec.
   Tier-1 Revocation 48B Error:     43 (> J(128,64) = 38 & aleph = 31)
   Algebraic Coalition RS Decode:   false -> COLLUSION DEFEATED BY TIER-1!
 
-=== SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_1 (BASE-3 CARRY OVERFLOW) ===
-  Total 256B Error Weight (Base-3 Carry Avalanche): 256 / 256 | RS Decode: false
+=== SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_T (BASE-3 CARRY OVERFLOW) ===
+  Total 256B Error Weight (Base-3 Carry Avalanche in G_T): 254 / 256 | RS Decode: false
 
 === SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===
-  Total 256B Error Weight (Unmasked w, m): 255 / 256 | RS Decode: false
+  Total 256B Error Weight (Unmasked w, m): 253 / 256 | RS Decode: false
+
+==========================================================================
+PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
+==========================================================================
+
+=== SCENARIO 5A: REVIEWER'S STATE-CACHING ATTACK ON STATIC TIER-1 (xi_i = 0) ===
+  [Static Tier-1 without xi_i] U_2 subtracts cached e_U2 -> Residual wt(0 || delta_rev) = 12 (<= 31)
+  [Static Tier-1 without xi_i] Patched U_2 RS Decode: true | Key Leaked: true (Confirmed Reviewer Point!)
+
+=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 20) ===
+  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 28 (<= 31) | U_2 caches E_101
+  [Frame 102 U_1 Legitimate] Blind RS Decode: true | wt(e_pol + xi_102) = 31 (<= 31) | KEM Valid: true
+  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 35 (> 31)  -> BLOCKED!
+  [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 41 (> 31) -> CACHE PATCH DEFEATED!
+
+=== SCENARIO 6: INTER-FRAME LINEAR ADDITION ATTACK (c'_102 + c'_103) ===
+  Support Overlap |supp(xi_102) cap supp(xi_103)| = 1
+  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 39 (> aleph = 31)
+  RS Decode on Inter-Frame Sum (c'_102 + c'_103): false -> INTER-FRAME ADDITION BLOCKED!
+
+=== SCENARIO 7: RESILIENCE UNDER FULL kappa_102 COMPROMISE (WITH LOGGED sigma_102, Sigma_102) ===
+  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 39 (> aleph = 31)
+  Target Frame 103 RS Decode after Full kappa_102 Leak: false -> TARGET FRAME PROTECTED!
+
+=== SCENARIO 8: ANALYTICAL & MONTE CARLO SUPPORT OVERLAP BOUND ===
+  [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = 1.581461676E-6 | Total Pr[wt <= 31] = 2.306660848E-6 (~ 2^-18.9)
+  [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = 7.520990844E-11 | Total Pr[wt <= 31] = 2.193723025E-10 (~ 2^-30.2)
+  Theoretical E[s] = 1.562 | Empirical Mean Overlap (500 pairs) = 1.546
+  Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 32 (Threshold aleph = 31) | Collisions: 0
+
+=== SCENARIO 9: POLICY-SCOPED SELECTIVE ACTIVATION (S = 0 FAST PATH) & TIER-2 RESET ===
+  [Clean Policy / Post-Tier-2 Reset] Synthetic Noise wt(xi_i) = 0 | Zero-Syndrome Fast Check (S = 0): true
+  [Clean Policy / Post-Tier-2 Reset] Berlekamp-Massey Bypassed | wt = 0 | Payload Match: true
 ```
 `benchmark-GT-LUT-vs-Kangaroo.m`:
 
