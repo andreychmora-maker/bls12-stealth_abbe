@@ -78,8 +78,8 @@ load "benchmark-GT-LUT-vs-Kangaroo.m";
 ```text
 === STEALTH ABBE PROTOTYPE SETUP IN F*_{p^12} (BLS12-381) ===
 Building O(1) Short-Interval DLP LUT in F*_{p^12} (Max Z = 13120, Entries = 13121)...
-LUT in F*_{p^12} constructed in 0.550 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
-Total Domain & Non-Systematic RS Setup completed in 0.740 sec.
+LUT in F*_{p^12} constructed in 0.540 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
+Total Domain & Non-Systematic RS Setup completed in 0.750 sec.
 
 --- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---
   |W_1 cap W_2| = 4 (<= Delta_int = 4)
@@ -107,10 +107,10 @@ Provisioning completed in 0.510 sec.
   Algebraic Coalition RS Decode:   false -> COLLUSION DEFEATED BY TIER-1!
 
 === SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_T (BASE-3 CARRY OVERFLOW) ===
-  Total 256B Error Weight (Base-3 Carry Avalanche in G_T): 254 / 256 | RS Decode: false
+  Total 256B Error Weight (Base-3 Carry Avalanche in G_T): 255 / 256 | RS Decode: false
 
 === SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===
-  Total 256B Error Weight (Unmasked w, m): 253 / 256 | RS Decode: false
+  Total 256B Error Weight (Unmasked w, m): 255 / 256 | RS Decode: false
 
 ==========================================================================
 PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
@@ -120,26 +120,26 @@ PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
   [Static Tier-1 without xi_i] U_2 subtracts cached e_U2 -> Residual wt(0 || delta_rev) = 12 (<= 31)
   [Static Tier-1 without xi_i] Patched U_2 RS Decode: true | Key Leaked: true (Confirmed Reviewer Point!)
 
-=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 20) ===
-  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 28 (<= 31) | U_2 caches E_101
+=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===
+  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 30 (<= 31) | U_2 caches E_101
   [Frame 102 U_1 Legitimate] Blind RS Decode: true | wt(e_pol + xi_102) = 31 (<= 31) | KEM Valid: true
-  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 35 (> 31)  -> BLOCKED!
-  [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 41 (> 31) -> CACHE PATCH DEFEATED!
+  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 37 (> 31)  -> BLOCKED!
+  [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 48 (> 31) -> CACHE PATCH DEFEATED!
 
 === SCENARIO 6: INTER-FRAME LINEAR ADDITION ATTACK (c'_102 + c'_103) ===
-  Support Overlap |supp(xi_102) cap supp(xi_103)| = 1
-  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 39 (> aleph = 31)
+  Support Overlap |supp(xi_102) cap supp(xi_103)| = 2
+  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 42 (> aleph = 31)
   RS Decode on Inter-Frame Sum (c'_102 + c'_103): false -> INTER-FRAME ADDITION BLOCKED!
 
 === SCENARIO 7: RESILIENCE UNDER FULL kappa_102 COMPROMISE (WITH LOGGED sigma_102, Sigma_102) ===
-  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 39 (> aleph = 31)
+  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 42 (> aleph = 31)
   Target Frame 103 RS Decode after Full kappa_102 Leak: false -> TARGET FRAME PROTECTED!
 
 === SCENARIO 8: ANALYTICAL & MONTE CARLO SUPPORT OVERLAP BOUND ===
   [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = 1.581461676E-6 | Total Pr[wt <= 31] = 2.306660848E-6 (~ 2^-18.9)
   [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = 7.520990844E-11 | Total Pr[wt <= 31] = 2.193723025E-10 (~ 2^-30.2)
-  Theoretical E[s] = 1.562 | Empirical Mean Overlap (500 pairs) = 1.546
-  Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 32 (Threshold aleph = 31) | Collisions: 0
+  Theoretical E[s] = 1.891 | Empirical Mean Overlap (500 pairs) = 1.912
+  Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 39 (Threshold aleph = 31) | Collisions: 0
 
 === SCENARIO 9: POLICY-SCOPED SELECTIVE ACTIVATION (S = 0 FAST PATH) & TIER-2 RESET ===
   [Clean Policy / Post-Tier-2 Reset] Synthetic Noise wt(xi_i) = 0 | Zero-Syndrome Fast Check (S = 0): true
