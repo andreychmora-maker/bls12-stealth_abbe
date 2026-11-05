@@ -483,7 +483,7 @@ printf "  [Static Tier-1 without xi_i] Patched U_2 RS Decode: %o | Key Leaked: %
 //    Pairwise window intersection |W_1 cap W_2| = 2 = Delta_int_scoped.
 //    => For legitimate U_1, ANY perturbation inside W_2 adds at most |W_1 cap W_2| = 2 new errors!
 //    => w_pol(U_1) <= 9 + 2 = 11 ALWAYS; with wt(xi_i) = 20, total wt <= 11 + 20 = 31 = aleph!
-printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 20) ===\n";
+printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===\n";
 M_rev_sc   := 15;
 tau_scoped := 9;  // Exact complement size: M_rev_sc - |W_j| = 15 - 6 = 9
 wt_xi      := 20; // Strictly above floor(aleph/2) = 15, within aleph - w_pol = 31 - 11 = 20
