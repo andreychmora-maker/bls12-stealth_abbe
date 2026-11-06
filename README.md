@@ -29,8 +29,12 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
 ## 🚀 Key Architectural Features
 
 1. **Non-Systematic Reed-Solomon Puncturing Defense (Rate *R* = 0.75):**
-   * Employs an extended [256, 192, 65]<sub>256</sub> code over GF(256) with a punctured syndrome decoder radius of ℵ = 31 symbol errors (32 on the full MDS code).
+   * Employs an extended [255, 192, 64]<sub>256</sub> code over GF(256) with a punctured syndrome decoder radius of ℵ = 31 symbol errors (32 on the full MDS code).
    * Utilizes a non-systematic scrambling matrix *S* ∈ GL(192, GF(256)) to provide a robust MDS puncturing margin (*δ* = 64 bytes), neutralizing direct linear matrix inversion attacks.
+2. **Support Intersection & Byte Cancellations:** For the [255, 192, 64]<sub>256</sub> extended non-systematic Reed–Solomon code (`t = 31`), inter-frame linear addition (`c'_i + c'_j`) combines independent ephemeral blind noise vectors (`wt(ξ_i) = wt(ξ_j) = 22`). The combined weight is given by `wt(ξ_i + ξ_j) = 44 - s - c`, where `s` is the support intersection size (`s ~ Hypergeometric(N = 255, K = 22, n = 22)`) and `c` is the byte cancellation count over `GF(256)*` (`c ~ Binomial(s, 1/255)`).
+- **Exact Tail Probability:** Falling within the Berlekamp–Massey decoding radius (`wt(ξ_i + ξ_j) ≤ 31`) requires `s + c ≥ 13`. The exact single-pair decodable probability is:
+  `Pr[wt(ξ_i + ξ_j) ≤ 31] ≈ 2.19 × 10^-10 (≈ 2^-30.2 to 2^-32.1)`
+- **Error Budget & Noise Profile:** Policy error budget `w_pol ≤ 9` combined with stream-seeded ephemeral noise `wt(ξ_i) = 22` satisfies `9 + 22 = 31 = t`, ensuring single-pass blind decoding for legitimate clients while trapping quarantined or linear-addition adversaries.
 
 2. **Two-Tier Revocation Strategy:**
    * **Tier-1 (Intra-Epoch Zero-Latency Revocation):** Implements a cover-free family of clean windows *W* of size *w* = 16 bytes within a revocation sub-block (*M* = 48 bytes), with bounded pairwise intersection Δ ≤ 4 bytes and baseline cohort error weight *τ* = 27 bytes. Enables instant user blacklisting via targeted broadcast perturbations.
@@ -76,10 +80,10 @@ load "benchmark-GT-LUT-vs-Kangaroo.m";
 `stealth-abbe-GT.m`:
 
 ```text
-=== STEALTH ABBE PROTOTYPE SETUP IN F*_{p^12} (BLS12-381) ===
-Building O(1) Short-Interval DLP LUT in F*_{p^12} (Max Z = 13120, Entries = 13121)...
-LUT in F*_{p^12} constructed in 0.540 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
-Total Domain & Non-Systematic RS Setup completed in 0.750 sec.
+=== STEALTH ABBE PROTOTYPE SETUP IN F_{p^12}^* (BLS12-381) ===
+Building O(1) Short-Interval DLP LUT in F_{p^12}^* (Max Z = 13120, Entries = 13121)...
+LUT in F_{p^12}^* constructed in 0.540 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
+Total Domain & Non-Systematic RS Setup completed in 0.730 sec.
 
 --- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---
   |W_1 cap W_2| = 4 (<= Delta_int = 4)
@@ -90,7 +94,7 @@ Total Domain & Non-Systematic RS Setup completed in 0.750 sec.
   |W_3 cap W_4| = 4 (<= Delta_int = 4)
 
 Provisioning 4 Cohort Participants via simulated DKG/MPC...
-Provisioning completed in 0.510 sec.
+Provisioning completed in 0.520 sec.
 
 === SCENARIO 1: BASELINE BROADCAST TO AUTHORIZED COHORT (MONOLITHIC KEM) ===
   [U_1 Authorized] RS Decode: true | wt(e_1) = 27 (<= aleph = 31) | KEM Digest & Schnorr Sig Valid: true | Key Match: true (0.180 sec)
@@ -102,15 +106,15 @@ Provisioning completed in 0.510 sec.
 
 === SCENARIO 3A: ALGEBRAIC ODD COALITION (T = 3) OVER GF(256) ===
   Left 128B Error (w, m canceled): 0
-  Semantic Attribute 80B Error:    0 (identical attributes!)
+  Semantic Attribute 79B Error:    0 (identical attributes!)
   Tier-1 Revocation 48B Error:     43 (> J(128,64) = 38 & aleph = 31)
   Algebraic Coalition RS Decode:   false -> COLLUSION DEFEATED BY TIER-1!
 
 === SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_T (BASE-3 CARRY OVERFLOW) ===
-  Total 256B Error Weight (Base-3 Carry Avalanche in G_T): 255 / 256 | RS Decode: false
+  Total 255B RS Core Error Weight (Base-3 Carry Avalanche in G_T): 253 / 255 | RS Decode: false
 
 === SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===
-  Total 256B Error Weight (Unmasked w, m): 255 / 256 | RS Decode: false
+  Total 255B RS Core Error Weight (Unmasked w, m): 253 / 255 | RS Decode: false
 
 ==========================================================================
 PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
@@ -121,25 +125,25 @@ PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
   [Static Tier-1 without xi_i] Patched U_2 RS Decode: true | Key Leaked: true (Confirmed Reviewer Point!)
 
 === SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===
-  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 30 (<= 31) | U_2 caches E_101
-  [Frame 102 U_1 Legitimate] Blind RS Decode: true | wt(e_pol + xi_102) = 31 (<= 31) | KEM Valid: true
-  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 37 (> 31)  -> BLOCKED!
+  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 28 (<= 31) | U_2 caches E_101
+  [Frame 102 U_1 Legitimate] Blind RS Decode: true | wt(e_pol + xi_102) = 30 (<= 31) | KEM Valid: true
+  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 34 (> 31)  -> BLOCKED!
   [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 48 (> 31) -> CACHE PATCH DEFEATED!
 
 === SCENARIO 6: INTER-FRAME LINEAR ADDITION ATTACK (c'_102 + c'_103) ===
-  Support Overlap |supp(xi_102) cap supp(xi_103)| = 2
-  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 42 (> aleph = 31)
+  Support Overlap |supp(xi_102) cap supp(xi_103)| = 1
+  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 43 (> aleph = 31)
   RS Decode on Inter-Frame Sum (c'_102 + c'_103): false -> INTER-FRAME ADDITION BLOCKED!
 
 === SCENARIO 7: RESILIENCE UNDER FULL kappa_102 COMPROMISE (WITH LOGGED sigma_102, Sigma_102) ===
-  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 42 (> aleph = 31)
+  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 43 (> aleph = 31)
   Target Frame 103 RS Decode after Full kappa_102 Leak: false -> TARGET FRAME PROTECTED!
 
 === SCENARIO 8: ANALYTICAL & MONTE CARLO SUPPORT OVERLAP BOUND ===
-  [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = 1.581461676E-6 | Total Pr[wt <= 31] = 2.306660848E-6 (~ 2^-18.9)
-  [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = 7.520990844E-11 | Total Pr[wt <= 31] = 2.193723025E-10 (~ 2^-30.2)
-  Theoretical E[s] = 1.891 | Empirical Mean Overlap (500 pairs) = 1.912
-  Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 39 (Threshold aleph = 31) | Collisions: 0
+  [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = 1.635924364E-6 | Total Pr[wt <= 31] = 2.382234622E-6 (~ 2^-18.8)
+  [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = 7.912538399E-11 | Total Pr[wt <= 31] = 2.298592658E-10 (~ 2^-32.0)
+  Theoretical E[s] = 1.898 | Empirical Mean Overlap (500 pairs) = 1.928
+  Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 38 (Threshold aleph = 31) | Collisions: 0
 
 === SCENARIO 9: POLICY-SCOPED SELECTIVE ACTIVATION (S = 0 FAST PATH) & TIER-2 RESET ===
   [Clean Policy / Post-Tier-2 Reset] Synthetic Noise wt(xi_i) = 0 | Zero-Syndrome Fast Check (S = 0): true
