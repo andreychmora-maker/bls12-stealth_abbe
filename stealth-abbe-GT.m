@@ -487,7 +487,7 @@ printf "  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: %o | wt(e_pol + xi_101) = 
        ok_U2_101, wt_U2_101;
 
 p_rev_scoped := p_policy;
-perturbed_sc := SetToSequence(ScopedWindows[2])[1..12];
+perturbed_sc := SetToSequence(ScopedWindows[2])[1..8];
 for s in perturbed_sc do
     pos := attr_len + s;
     d_val := Random(F);
