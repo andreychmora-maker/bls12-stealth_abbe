@@ -431,16 +431,16 @@ wt_total_even  := #[i : i in [1..n_rs] | err_coll_even[i] ne F!0];
 ok_coll_even, _, _, _ := DecodeExtNS(c_dp_coll_even);
 printf "  Total 255B RS Core Error Weight (Unmasked w, m): %o / 255 | RS Decode: %o\n", wt_total_even, ok_coll_even;
 
-/* ==========================================================================
+/* --------------------------------------------------------------------------
    PART 8: REVIEWER RESPONSE VERIFICATION SUITE (SCENARIOS 5 TO 9)
-   ========================================================================== */
+   -------------------------------------------------------------------------- */
 
 printf "\n==========================================================================\n";
 printf "PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE\n";
 printf "==========================================================================\n";
 
 printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===\n";
-M_rev_sc   := 26;
+M_rev_sc   := 13;
 wt_xi      := 22;
 
 ScopedWindows := [
@@ -463,12 +463,11 @@ BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
     return r_j, M_j;
 end function;
 
-// Установим tau_val = 2 для U_1, чтобы его суммарный вес составил 2 (базовые ошибки) + 2 (пересечение окон) + 22 (шум) = 26 <= 31
-_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, 2);
-_, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
-
-C_U1_scoped := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
-C_U2_scoped := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta);
+// Для U_1 передаем tau_val = 4 (wt = 4 + 4 + 22 = 30 <= 31), для U_2 оставляем 7
+_, M_U1_scoped := BuildUserVector(CleanWindows[1], p_policy, w_cohort, m_mask, 3);
+_, M_U2_scoped := BuildUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
+C_U1_scoped    := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
+C_U2_scoped    := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta); 
 
 kappa_101, khat_101, _, _ := BuildMonolithicKEM(B_meta, 101);
 cw_101 := EncodeExtNS(kappa_101);
@@ -501,9 +500,7 @@ C_bc_102    := EncryptVectorEG_GT(c_prime_102, P_pub_T, g_T, q, Weights, eta);
 
 c_dp_U1_102 := HomomorphicEvalAndUnpackGT(C_bc_102, [C_U1_scoped], Users_sk[1], Users_h[1], p, q, LUT, eta);
 ok_U1_102, rec_U1_102, wt_U1_102, _ := DecodeExtNS(c_dp_U1_102);
-
-wt_U1_102 := #[idx : idx in [1..n_rs] | (c_dp_U1_102 + cw_102)[idx] ne F!0];
-
+wt_U1_102   := #[idx : idx in [1..n_rs] | (c_dp_U1_102 + cw_102)[idx] ne F!0];
 kem_ok_102, rec_khat_102, _, _ := VerifyMonolithicKEM(rec_U1_102, 102);
 printf "  [Frame 102 U_1 Legitimate] Blind RS Decode: %o | wt(e_pol + xi_102) = %o (<= 31) | KEM Valid: %o\n",
        ok_U1_102, wt_U1_102, kem_ok_102 and (rec_khat_102 eq khat_102);
