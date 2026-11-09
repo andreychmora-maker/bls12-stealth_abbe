@@ -463,9 +463,10 @@ BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
     return r_j, M_j;
 end function;
 
-// U_1 получает 5 базовых ошибок (wt = 5 + 2 + 22 = 29 <= 31), U_2 получает 7 базовых ошибок
-_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, 5);
+// Установим tau_val = 2 для U_1, чтобы его суммарный вес составил 2 (базовые ошибки) + 2 (пересечение окон) + 22 (шум) = 26 <= 31
+_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, 2);
 _, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
+
 C_U1_scoped := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
 C_U2_scoped := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta);
 
