@@ -440,32 +440,38 @@ printf "PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE\n";
 printf "==========================================================================\n";
 
 printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===\n";
-M_rev_sc   := 13;
+
+M_rev_sc   := 26;
 wt_xi      := 22;
 
 ScopedWindows := [
     {1..14},               // U_1 clean window (14B)
-    {1, 2} join {15..26}   // U_2 clean window (14B); |W_1 cap W_2| = 2 bytes (<= Delta_int_sc = 2)
+    {1, 2} join {15..26}   // U_2 clean window (14B); |W_1 cap W_2| = 2 bytes
 ];
 
 BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
     r_j := p_pol;
     complement_seq := [s : s in [1..M_rev_sc] | not (s in W_j)];
-    error_positions := Set(complement_seq[1..tau_val]); 
-    for s in error_positions do
-        pos := attr_len + s;
-        eps := Random(F);
-        while eps eq F!0 do eps := Random(F); end while;
-        r_j[pos] := p_pol[pos] + eps;
-    end for;
+    
+    // Проверяем, что в дополнении достаточно элементов для tau_val
+    if #complement_seq ge tau_val and tau_val gt 0 then
+        error_positions := Set(complement_seq[1..tau_val]); 
+        for s in error_positions do
+            pos := attr_len + s;
+            eps := Random(F);
+            while eps eq F!0 do eps := Random(F); end while;
+            r_j[pos] := p_pol[pos] + eps;
+        end for;
+    end if;
+    
     w_concat_r := w_coh cat r_j;
     M_j := [w_concat_r[idx] + m_msk[idx] : idx in [1..n_len]];
     return r_j, M_j;
 end function;
 
-// Для U_1 передаем tau_val = 4 (wt = 4 + 4 + 22 = 30 <= 31), для U_2 оставляем 7
-_, M_U1_scoped := BuildUserVector(CleanWindows[1], p_policy, w_cohort, m_mask, 3);
-_, M_U2_scoped := BuildUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
+_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, 1);
+_, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
+
 C_U1_scoped    := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
 C_U2_scoped    := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta); 
 
