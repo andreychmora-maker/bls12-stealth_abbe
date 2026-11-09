@@ -193,7 +193,7 @@ VerifyMonolithicKEM := function(kappa_vec, frame_idx)
     return ok_digest and ok_sig, kappa_hat, sigma_i, Sigma_i;
 end function;
 
-SampleEphemeralBlindNoise := function(K_broadcaster, frame_idx, wt_xi, active_flag)
+SampleEphemeralBlindNoise := function(K_broadcaster, frame_idx, wt_xi, active_flag : MaxCoord := 128)
     if not active_flag or (wt_xi eq 0) then
         return [F!0 : i in [1..n_len]], {};
     end if;
@@ -202,7 +202,7 @@ SampleEphemeralBlindNoise := function(K_broadcaster, frame_idx, wt_xi, active_fl
 
     supp_set := {};
     while #supp_set lt wt_xi do
-        Include(~supp_set, Random(1, 128));
+        Include(~supp_set, Random(1, MaxCoord));
     end while;
 
     xi_vec := [F!0 : i in [1..n_len]];
@@ -432,28 +432,36 @@ ok_coll_even, _, _, _ := DecodeExtNS(c_dp_coll_even);
 printf "  Total 255B RS Core Error Weight (Unmasked w, m): %o / 255 | RS Decode: %o\n", wt_total_even, ok_coll_even;
 
 /* --------------------------------------------------------------------------
-   PART 8: REVIEWER RESPONSE VERIFICATION SUITE (SCENARIOS 5 TO 9)
+   PART 8: REVIEWER RESPONSE VERIFICATION SUITE (SCENARIOS 5A TO 9)
    -------------------------------------------------------------------------- */
 
 printf "\n==========================================================================\n";
 printf "PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE\n";
 printf "==========================================================================\n";
 
+printf "\n=== SCENARIO 5A: STATE-CACHING ATTACK ON STATIC TIER-1 (xi_i = 0) ===\n";
+c_dp_U2_static_patched := c_dp_U2 + e_U2_cached;
+ok_5a, rec_kappa_5a, wt_5a, _ := DecodeExtNS(c_dp_U2_static_patched);
+printf "  [Static Tier-1 State-Patch] Residual Error Weight wt(delta_rev) = %o (<= aleph = %o) | RS Decode: %o | Key Exposed: %o\n",
+       wt_5a, aleph, ok_5a, rec_kappa_5a eq kappa_payload;
+
 printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===\n";
 
 M_rev_sc   := 26;
 wt_xi      := 22;
+tau_sc     := 8;
 
+// Детерминированные окна по 14B с пересечением |W_1 cap W_2| = 1B (координата 1)
 ScopedWindows := [
-    {1..14},               // U_1 clean window (14B)
-    {1, 2} join {15..26}   // U_2 clean window (14B); |W_1 cap W_2| = 2 bytes
+    {1..14},               // U_1 clean window (14B); дополнение в 1..26 -> [15..26]
+    {1} join {15..26}      // U_2 clean window; |W_1 cap W_2| = 1 byte
 ];
+// Упорядоченный список возмущаемых координат U_2 (9B: 1B в W_1 cap W_2 и 8B в S_1 = {15..22})
+ScopedPerturbSeq := [1] cat [15..22]; // w_pert = 9 (или [15..22] для w_pert = 8 и wt(U_1) = 30)
 
 BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
     r_j := p_pol;
     complement_seq := [s : s in [1..M_rev_sc] | not (s in W_j)];
-    
-    // Проверяем, что в дополнении достаточно элементов для tau_val
     if #complement_seq ge tau_val and tau_val gt 0 then
         error_positions := Set(complement_seq[1..tau_val]); 
         for s in error_positions do
@@ -463,17 +471,17 @@ BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
             r_j[pos] := p_pol[pos] + eps;
         end for;
     end if;
-    
     w_concat_r := w_coh cat r_j;
     M_j := [w_concat_r[idx] + m_msk[idx] : idx in [1..n_len]];
     return r_j, M_j;
 end function;
 
-_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, 1);
-_, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
+// Симметричная инициализация U_1 и U_2 с одинаковым tau_sc = 8
+r_U1_sc, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, tau_sc);
+r_U2_sc, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, tau_sc);
 
-C_U1_scoped    := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
-C_U2_scoped    := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta); 
+C_U1_scoped := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
+C_U2_scoped := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta); 
 
 kappa_101, khat_101, _, _ := BuildMonolithicKEM(B_meta, 101);
 cw_101 := EncodeExtNS(kappa_101);
@@ -487,11 +495,11 @@ printf "  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: %o | wt(e_pol + xi_101) = 
        ok_U2_101, wt_U2_101;
 
 p_rev_scoped := p_policy;
-perturbed_sc := SetToSequence(ScopedWindows[2])[1..8];
-for s in perturbed_sc do
+for s in ScopedPerturbSeq do
     pos := attr_len + s;
     d_val := Random(F);
-    while d_val eq F!0 do
+    // Гарантируем отсутствие случайного зануления в F_256^* при поглощении (вероятность 254/255)
+    while (d_val eq F!0) or ((p_policy[pos] + d_val) eq r_U1_sc[pos]) do
         d_val := Random(F);
     end while;
     p_rev_scoped[pos] +:= d_val;
@@ -514,13 +522,13 @@ printf "  [Frame 102 U_1 Legitimate] Blind RS Decode: %o | wt(e_pol + xi_102) = 
 c_dp_U2_102 := HomomorphicEvalAndUnpackGT(C_bc_102, [C_U2_scoped], Users_sk[2], Users_h[2], p, q, LUT, eta);
 ok_U2_direct, _, _, _ := DecodeExtNS(c_dp_U2_102);
 wt_U2_direct := #[idx : idx in [1..n_rs] | (c_dp_U2_102 + cw_102)[idx] ne F!0];
-printf "  [Frame 102 U_2 Direct]     Blind RS Decode: %o | wt(e_rev + xi_102) = %o (> 31)  -> BLOCKED!\n",
+printf "  [Frame 102 U_2 Direct]     Blind RS Decode: %o | wt(e_rev + xi_102) = %o (> 38 & 31) -> BLOCKED!\n",
        ok_U2_direct, wt_U2_direct;
 
 c_dp_U2_patched := c_dp_U2_102 + E_101_cached;
 ok_U2_patched, _, _, _ := DecodeExtNS(c_dp_U2_patched);
 wt_U2_patched := #[idx : idx in [1..n_rs] | (c_dp_U2_patched + cw_102)[idx] ne F!0];
-printf "  [Frame 102 U_2 Patched]    Blind RS Decode: %o | wt(delta_rev + xi_102 - xi_101) = %o (> 31) -> CACHE PATCH DEFEATED!\n",
+printf "  [Frame 102 U_2 Patched]    Blind RS Decode: %o | wt(delta_rev + xi_102 - xi_101) = %o (> 38 & 31) -> CACHE PATCH DEFEATED!\n",
        ok_U2_patched, wt_U2_patched;
 
 /* --------------------------------------------------------------------------
@@ -594,8 +602,8 @@ min_combined_wt := 255;
 decodable_collisions := 0;
 
 for tr in [1..num_trials] do
-    xi_a, supp_a := SampleEphemeralBlindNoise(K_broadcaster, 1000 + 2*tr, wt_xi, true);
-    xi_b, supp_b := SampleEphemeralBlindNoise(K_broadcaster, 1000 + 2*tr + 1, wt_xi, true);
+    xi_a, supp_a := SampleEphemeralBlindNoise(K_broadcaster, 1000 + 2*tr, wt_xi, true : MaxCoord := n_rs);
+    xi_b, supp_b := SampleEphemeralBlindNoise(K_broadcaster, 1000 + 2*tr + 1, wt_xi, true : MaxCoord := n_rs);
     ov := #(supp_a meet supp_b);
     total_overlap +:= ov;
     wt_ab := #[idx : idx in [1..n_rs] | (xi_a[idx] + xi_b[idx]) ne F!0];
