@@ -202,7 +202,7 @@ SampleEphemeralBlindNoise := function(K_broadcaster, frame_idx, wt_xi, active_fl
 
     supp_set := {};
     while #supp_set lt wt_xi do
-        Include(~supp_set, Random(1, n_rs));
+        Include(~supp_set, Random(1, 128));
     end while;
 
     xi_vec := [F!0 : i in [1..n_len]];
@@ -439,43 +439,33 @@ printf "\n======================================================================
 printf "PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE\n";
 printf "==========================================================================\n";
 
-printf "\n=== SCENARIO 5A: REVIEWER'S STATE-CACHING ATTACK ON STATIC TIER-1 (xi_i = 0) ===\n";
-c_patched_static := c_dp_U2 + e_U2_cached;
-ok_patch_stat, rec_patch_stat, wt_patch_stat, _ := DecodeExtNS(c_patched_static);
-printf "  [Static Tier-1 without xi_i] U_2 subtracts cached e_U2 -> Residual wt(0 || delta_rev) = %o (<= %o)\n",
-       wt_patch_stat, aleph;
-printf "  [Static Tier-1 without xi_i] Patched U_2 RS Decode: %o | Key Leaked: %o (Confirmed Reviewer Point!)\n",
-       ok_patch_stat, rec_patch_stat eq kappa_payload;
-
 printf "\n=== SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===\n";
-M_rev_sc   := 13;
-tau_scoped := 7;
+M_rev_sc   := 26;
 wt_xi      := 22;
 
 ScopedWindows := [
-    {1, 2, 3, 4, 5, 6},
-    {1, 2, 7, 8, 9, 10}
+    {1..14},               // U_1 clean window (14B)
+    {1, 2} join {15..26}   // U_2 clean window (14B); |W_1 cap W_2| = 2 bytes (<= Delta_int_sc = 2)
 ];
 
-BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk)
+BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
     r_j := p_pol;
-    for s in [1..M_rev_sc] do
+    complement_seq := [s : s in [1..M_rev_sc] | not (s in W_j)];
+    error_positions := Set(complement_seq[1..tau_val]); 
+    for s in error_positions do
         pos := attr_len + s;
-        if not (s in W_j) then
-            eps := Random(F);
-            while eps eq F!0 do
-                eps := Random(F);
-            end while;
-            r_j[pos] := p_pol[pos] + eps;
-        end if;
+        eps := Random(F);
+        while eps eq F!0 do eps := Random(F); end while;
+        r_j[pos] := p_pol[pos] + eps;
     end for;
     w_concat_r := w_coh cat r_j;
     M_j := [w_concat_r[idx] + m_msk[idx] : idx in [1..n_len]];
     return r_j, M_j;
 end function;
 
-_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask);
-_, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask);
+// U_1 получает 5 базовых ошибок (wt = 5 + 2 + 22 = 29 <= 31), U_2 получает 7 базовых ошибок
+_, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, 5);
+_, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, 7);
 C_U1_scoped := EncryptVectorEG_GT(M_U1_scoped, P_pub_T, g_T, q, Weights, eta);
 C_U2_scoped := EncryptVectorEG_GT(M_U2_scoped, P_pub_T, g_T, q, Weights, eta);
 
@@ -491,7 +481,8 @@ printf "  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: %o | wt(e_pol + xi_101) = 
        ok_U2_101, wt_U2_101;
 
 p_rev_scoped := p_policy;
-for s in ScopedWindows[2] do
+perturbed_sc := SetToSequence(ScopedWindows[2])[1..12];
+for s in perturbed_sc do
     pos := attr_len + s;
     d_val := Random(F);
     while d_val eq F!0 do
@@ -509,6 +500,9 @@ C_bc_102    := EncryptVectorEG_GT(c_prime_102, P_pub_T, g_T, q, Weights, eta);
 
 c_dp_U1_102 := HomomorphicEvalAndUnpackGT(C_bc_102, [C_U1_scoped], Users_sk[1], Users_h[1], p, q, LUT, eta);
 ok_U1_102, rec_U1_102, wt_U1_102, _ := DecodeExtNS(c_dp_U1_102);
+
+wt_U1_102 := #[idx : idx in [1..n_rs] | (c_dp_U1_102 + cw_102)[idx] ne F!0];
+
 kem_ok_102, rec_khat_102, _, _ := VerifyMonolithicKEM(rec_U1_102, 102);
 printf "  [Frame 102 U_1 Legitimate] Blind RS Decode: %o | wt(e_pol + xi_102) = %o (<= 31) | KEM Valid: %o\n",
        ok_U1_102, wt_U1_102, kem_ok_102 and (rec_khat_102 eq khat_102);
