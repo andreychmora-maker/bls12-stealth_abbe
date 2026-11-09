@@ -2,14 +2,14 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23824328.svg)](https://doi.org/10.5281/zenodo.23824328)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-[![Magma Compatible](https://img.shields.io/badge/Language-Magma%20V2.29--10-blue.svg)](http://magma.maths.usyd.edu.au/)
+[![Magma Compatible](https://img.shields.io/badge/Language-Magma%20V2.29--10-blue.svg)](http://magma.maths.usyd.edu.au/calc/)
 [![Code Rate](https://img.shields.io/badge/Code%20Rate-R%3D0.75-green.svg)]()
 
-**Stealth ABBE** is a provably secure Attribute-Based Broadcast Encryption framework combining homomorphic ElGamal encryption with non-systematic Reed-Solomon error-correcting codes and a two-tier cryptographic revocation mechanism.
+**Stealth ABBE** is a provably secure Attribute-Based Broadcast Encryption framework combining additively homomorphic (exponential) ElGamal encryption with non-systematic Reed–Solomon error-correcting codes, monolithic KEM encapsulation, policy-scoped ephemeral half-radius blind noise, and a two-tier cryptographic revocation mechanism.
 
-This repository contains the full algebraic verification prototype and benchmarking suite implemented for the **Magma Computational Algebra System**. The core verification script (`stealth-abbe-GT.m`) executes over the cyclotomic target subgroup 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup> of the **BLS12-381** pairing-friendly elliptic curve, featuring cost-free Frobenius conjugation, carry-free Base-3 homomorphic packing, non-systematic MDS coding, and Tier-1 cover-free revocation. Additionally, `benchmark-GT-LUT-vs-Kangaroo.m` provides an empirical comparison of memory-computation trade-offs for short-interval discrete logarithm extraction.
-### Benchmark: Short-Interval DLP Extraction in 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup>
+This repository contains the full algebraic verification prototype and benchmarking suite implemented for the **Magma Computational Algebra System**. The core verification script (`stealth-abbe-GT.m`) executes over the cyclotomic target subgroup 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub> of the **BLS12-381** pairing-friendly elliptic curve, featuring cost-free Frobenius conjugation, carry-free Base-3 homomorphic packing, non-systematic MDS coding, and Tier-1 cover-free quarantine with stream-seeded blind noise. Additionally, `benchmark-GT-LUT-vs-Kangaroo.m` provides an empirical comparison of memory-computation trade-offs for short-interval discrete logarithm extraction.
+
+### Benchmark: Short-Interval DLP Extraction in 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub>
 
 Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>blk</sub> = 256 blocks per <i>C</i><sub>RS</sub>[256, 192, 65]<sub>256</sub> broadcast frame, averaged over 10,000 trials):
 
@@ -26,38 +26,47 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
 | **Exact Frame Recovery** | `true` (`256/256`) | `true` (`256/256`) | `true` (`256/256`) |
 
 ---
+
 ## 🚀 Key Architectural Features
 
-1. **Non-Systematic Reed-Solomon Puncturing Defense (Rate *R* = 0.75):**
-   * Employs an extended [255, 192, 64]<sub>256</sub> code over GF(256) with a punctured syndrome decoder radius of ℵ = 31 symbol errors (32 on the full MDS code).
-   * Utilizes a non-systematic scrambling matrix *S* ∈ GL(192, GF(256)) to provide a robust MDS puncturing margin (*δ* = 64 bytes), neutralizing direct linear matrix inversion attacks.
-2. **Support Intersection & Byte Cancellations:** For the [255, 192, 64]<sub>256</sub> extended non-systematic Reed–Solomon code (`t = 31`), inter-frame linear addition (`c'_i + c'_j`) combines independent ephemeral blind noise vectors (`wt(ξ_i) = wt(ξ_j) = 22`). The combined weight is given by `wt(ξ_i + ξ_j) = 44 - s - c`, where `s` is the support intersection size (`s ~ Hypergeometric(N = 255, K = 22, n = 22)`) and `c` is the byte cancellation count over `GF(256)*` (`c ~ Binomial(s, 1/255)`).
-- **Exact Tail Probability:** Falling within the Berlekamp–Massey decoding radius (`wt(ξ_i + ξ_j) ≤ 31`) requires `s + c ≥ 13`. The exact single-pair decodable probability is:
-  `Pr[wt(ξ_i + ξ_j) ≤ 31] ≈ 2.19 × 10^-10 (≈ 2^-30.2 to 2^-32.1)`
-- **Error Budget & Noise Profile:** Policy error budget `w_pol ≤ 9` combined with stream-seeded ephemeral noise `wt(ξ_i) = 22` satisfies `9 + 22 = 31 = t`, ensuring single-pass blind decoding for legitimate clients while trapping quarantined or linear-addition adversaries.
+1. **Non-Systematic Reed–Solomon Puncturing Defense (Rate <i>R</i> = 0.75) & Monolithic KEM:**
+   * Employs a non-systematic [255, 192, 64]<sub>256</sub> cyclic Reed–Solomon core embedded in a 256-byte container (<i>C</i><sub>RS</sub>[256, 192, 65]<sub>256</sub>) over GF(256) with a Berlekamp–Massey unique decoding radius of ℵ = 31 symbol errors.
+   * Utilizes a dense invertible scrambling matrix <i>S</i> ∈ GL(192, GF(256)) to enforce a 64-byte MDS puncturing margin (<i>δ</i> = 64 bytes), neutralizing direct linear matrix inversion attacks.
+   * Encapsulates the 256-bit session key (`κ̂_i`, 32B), SHA-256 integrity digest (`κ̃_i`, 32B), Broadcast Roster (`B`, 64B), session salt (`σ_i`, 16B), and compact Schnorr signature (`Σ_i`, 48B) into a single 192-byte monolithic payload (`κ_i`) with zero external header overhead.
 
-2. **Two-Tier Revocation Strategy:**
-   * **Tier-1 (Intra-Epoch Zero-Latency Revocation):** Implements a cover-free family of clean windows *W* of size *w* = 16 bytes within a revocation sub-block (*M* = 48 bytes), with bounded pairwise intersection Δ ≤ 4 bytes and baseline cohort error weight *τ* = 27 bytes. Enables instant user blacklisting via targeted broadcast perturbations.
-   * **Tier-2 (Inter-Epoch Hard Reset):** Global cohort blocker (**w**) and session mask (**m**) rotation ensuring long-term cryptographic hygiene and history purging.
+2. **Policy-Scoped Ephemeral Half-Radius Blind Noise (<i>ξ<sub>i</sub></i>) & Support Overlap Bounds:**
+   * **Support Intersection & Byte Cancellations:** To neutralize historical state-caching patches and inter-frame linear ciphertext addition (`c'_i + c'_j`), the broadcaster injects stream-seeded ephemeral blind noise (`wt(ξ_i) = wt(ξ_j) = 22`). Under inter-frame addition, the combined error weight is `wt(ξ_i + ξ_j) = 44 - s - c`, where `s` is the support intersection size (`s ~ Hypergeometric(N = 255, K = 22, n = 22)`, expected overlap `E[s] ≈ 1.898`) and `c` is the byte cancellation count over `GF(256)*` (`c ~ Binomial(s, 1/255)`).
+   * **Exact Tail Probability:** Falling within the Berlekamp–Massey unique decoding radius (`wt(ξ_i + ξ_j) ≤ 31`) requires `s + c ≥ 13`. The exact single-pair collision probability over the 255-symbol cyclic RS core is:
+     * Profile `wt(ξ_i) = 22, w_pol ≤ 9`: `Pr[wt(ξ_i + ξ_j) ≤ 31] = 2.30 × 10^-10 (≈ 2^-32.0)` (`≈ 2.19 × 10^-10 ≈ 2^-32.1` for `N = 256`).
+     * Profile `wt(ξ_i) = 20, w_pol ≤ 11`: `Pr[wt(ξ_i + ξ_j) ≤ 31] = 2.38 × 10^-6 (≈ 2^-18.8)`.
+   * **Error Budget & Fast-Path Bypass:** Active policy error budget `w_pol ≤ 9` combined with disjoint ephemeral noise `wt(ξ_i) = 22` satisfies `9 + 22 = 31 = ℵ`, guaranteeing single-pass blind decoding for legitimate clients. For clean policies (`ξ_i = 0`), a fast zero-syndrome check (`S = 0`) bypasses Berlekamp–Massey evaluation completely.
 
-3. **Cyclotomic ElGamal Engine (BLS12-381):**
+3. **Two-Tier Cryptographic Revocation Strategy:**
+   * **Tier-1 (Intra-Epoch Zero-Latency Quarantine):** Implements a cover-free family of clean windows <i>W<sub>j</sub></i> within the revocation sub-block. In the stateless regime (<i>M</i> = 48B, <i>w</i><sub>clean</sub> = 16B, Δ<sub>int</sub> ≤ 4B, <i>τ</i><sub>coh</sub> = 27B), perturbing <i>w</i><sub>pert</sub> = 12B pushes the revoked user to `wt = 39 > J(128, 64) = 38 > ℵ = 31` while keeping legitimate cohort members at `wt ≤ 31`. In the active quarantine regime (`wt(ξ_i) = 22`, <i>τ</i><sub>sc</sub> = 8B, Δ<sub>int,sc</sub> = 1B, <i>w</i><sub>pert</sub> = 9B), legitimate users decode blindly at `wt = 31 ≤ 31`, whereas revoked users are blocked beyond the punctured Johnson bound both on direct decoding (`wt = 39 > 38`) and on state-cached differential patching (`wt = 47 > 38`).
+   * **Tier-2 (Inter-Epoch Hard Reset):** Global cohort-isolating blocker (**w**) and blinding mask (**m**) rotation permanently evicts revoked credentials, reclaims the full decoding radius ℵ = 31, and resets `ξ_i = 0`.
+
+4. **Cyclotomic ElGamal Engine (BLS12-381):**
    * Block-wise additive ElGamal aggregation over BLS12-381 using carry-free Base-3 scalar embedding with ternary weights 3<sup>0</sup>, 3<sup>1</sup>, ..., 3<sup>7</sup> (<i>η</i> = 8, max scalar <i>Z</i> = 13120).
-   * Implements split-key pairing projection cancelled via fast cyclotomic inversion using Frobenius conjugation (<i>A</i><sup>−1</sup> = <i>A</i><sup><i>p</i><sup>6</sup></sup>), followed by <i>O</i>(1) lookup-table (LUT) or Kangaroo short-interval discrete logarithm recovery.
+   * Implements split-key pairing projection cancelled via cost-free cyclotomic inversion using Frobenius conjugation (<i>A</i><sup>−1</sup> = <i>A</i><sup><i>p</i><sup>6</sup></sup>), followed by <i>O</i>(1) lookup-table (LUT) or Kangaroo short-interval discrete logarithm recovery.
 
-4. **Two-Layer Collusion Resistance:**
-   * **Base-3 Carry Avalanche:** Homomorphic aggregation of *T* ≥ 3 ciphertexts in 𝔾<sub><i>T</i></sub> triggers inter-digit ternary carries (3 = 10<sub>3</sub>, 4 = 11<sub>3</sub>), causing a catastrophic 256 / 256-byte decoding failure.
-   * **Combinatorial Error Amplification:** Same-attribute odd coalitions (*T* = 3) attempting direct algebraic combination in GF(256) encounter an enforced error weight of ~43.8 bytes > *J*(128, 64) = 38, strictly exceeding both the unique decoding radius and the Johnson list-decoding bound.
+5. **Two-Layer Collusion Resistance:**
+   * **Base-3 Carry Avalanche & Mask Preservation:** Homomorphic aggregation of odd (<i>T</i> = 3) or even (<i>T</i> = 2) coalitions in 𝔾<sub><i>T</i></sub> either triggers inter-digit ternary carries (3 = 10<sub>3</sub>, 4 = 11<sub>3</sub>) or leaves the global masks (**w**, **m**) uncancelled, causing a catastrophic `253 / 255`-symbol decoding failure.
+   * **Combinatorial Error Amplification:** Same-attribute odd coalitions (<i>T</i> = 3) attempting direct algebraic combination in GF(256) encounter an enforced error weight of `43 > J(128, 64) = 38 > ℵ = 31`, strictly exceeding both the unique decoding radius and the punctured Guruswami–Sudan / Johnson list-decoding bound.
 
 ---
+
 ## 🛠️ Repository Structure
 
 - `stealth-abbe-GT.m` — Standalone end-to-end Magma verification script containing:
-  * BLS12-381 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub><sup></sup> domain setup, Frobenius conjugation, and <i>O</i>(1) Short-Interval DLP lookup table (LUT) generator (13,121 entries).
-  * Non-systematic RS [256, 192, 65]<sub>256</sub> encoder and guarded syndrome decoder.
-  * Monolithic KEM encapsulation and verification functions (κ̂, κ̃, B, σ, Σ).
-  * Stream-seeded infinite PRG generator for policy-scoped ephemeral blind noise (ξ<sub>i</sub>).
-  * Cover-free clean window geometry verifier (*M* = 48, *w* = 16, Δ = 4) and complete execution scenarios (Authorized decrypt, Tier-1 quarantine & state-caching defense, inter-frame addition block, full κ<sub>i</sub> compromise resilience, clean policy fast-path).
-  * Complete execution scenarios (Authorized decrypt, Tier-1 revocation, Algebraic & Homomorphic Odd Collusion *T* = 3 defeat, Even Collusion *T* = 2 mask annihilation failure).
+  * BLS12-381 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub> domain setup, Frobenius conjugation, simulated DKG/MPC split-key provisioning, and <i>O</i>(1) Short-Interval DLP lookup table (LUT) generator (13,121 entries).
+  * Non-systematic RS [255, 192, 64]<sub>256</sub> (in 256B container) encoder, zero-syndrome fast check (`S = 0`), and guarded Berlekamp–Massey decoder.
+  * Monolithic KEM encapsulation and verification functions (`κ̂ || κ̃ || B || σ || Σ`).
+  * Stream-seeded PRG generator for policy-scoped ephemeral half-radius blind noise (`ξ_i`).
+  * Cover-free clean window geometry verifier and 9 comprehensive verification scenarios:
+    * **Scenarios 1–2:** Baseline authorized broadcast & stateless Tier-1 intra-epoch revocation (`wt = 39 > 31` vs. `wt = 31 ≤ 31`).
+    * **Scenarios 3A, 3B & 4:** Algebraic odd coalition (`T = 3` in GF(256), `wt = 43 > 38`), homomorphic odd coalition (`T = 3` in 𝔾<sub><i>T</i></sub>, Base-3 carry avalanche `253 / 255`), and even coalition (`T = 2`, unmasked **w**, **m** `253 / 255`).
+    * **Scenarios 5A–5B:** State-caching vulnerability reproduction on static Tier-1 (`ξ_i = 0`, `wt = 12 ≤ 31`) and complete mitigation via stream-seeded blind noise (`wt(ξ_i) = 22`, legitimate `U_1` decoded at `wt = 31 ≤ 31`, revoked `U_2` blocked at `wt = 39 > 38` direct and `wt = 47 > 38` patched).
+    * **Scenarios 6–9:** Inter-frame linear addition defense (`c'_102 + c'_103`), full `κ_102` compromise resilience on target Frame 103, exact hypergeometric & 500-pair Monte Carlo overlap verification, and `S = 0` zero-syndrome fast-path bypass.
 
 - `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script (10,000 trials) evaluating:
   * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 578 B/entry, 7.58 MB / 7.23 MiB).
@@ -66,15 +75,15 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
   * Head-to-head online extraction timing across a full 256-block RS frame.
 
 ---
+
 ## ⚙️ Getting Started & Verification
 
-To run the reference prototype and verify all security scenarios, open your Magma environment (or the Magma Online Calculator) and execute:
+To run the reference prototype and verify all security scenarios, open your Magma environment (or the [Magma Online Calculator](http://magma.maths.usyd.edu.au/calc/)) and execute:
 
 ```magma
 load "stealth-abbe-GT.m";
 load "benchmark-GT-LUT-vs-Kangaroo.m";
 ```
-
 ### Expected Output Summary:
 
 `stealth-abbe-GT.m`:
@@ -82,8 +91,8 @@ load "benchmark-GT-LUT-vs-Kangaroo.m";
 ```text
 === STEALTH ABBE PROTOTYPE SETUP IN F_{p^12}^* (BLS12-381) ===
 Building O(1) Short-Interval DLP LUT in F_{p^12}^* (Max Z = 13120, Entries = 13121)...
-LUT in F_{p^12}^* constructed in 0.540 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
-Total Domain & Non-Systematic RS Setup completed in 0.730 sec.
+LUT in F_{p^12}^* constructed in 0.550 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
+Total Domain & Non-Systematic RS Setup completed in 0.750 sec.
 
 --- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---
   |W_1 cap W_2| = 4 (<= Delta_int = 4)
@@ -94,7 +103,7 @@ Total Domain & Non-Systematic RS Setup completed in 0.730 sec.
   |W_3 cap W_4| = 4 (<= Delta_int = 4)
 
 Provisioning 4 Cohort Participants via simulated DKG/MPC...
-Provisioning completed in 0.520 sec.
+Provisioning completed in 0.510 sec.
 
 === SCENARIO 1: BASELINE BROADCAST TO AUTHORIZED COHORT (MONOLITHIC KEM) ===
   [U_1 Authorized] RS Decode: true | wt(e_1) = 27 (<= aleph = 31) | KEM Digest & Schnorr Sig Valid: true | Key Match: true (0.180 sec)
@@ -120,35 +129,35 @@ Provisioning completed in 0.520 sec.
 PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
 ==========================================================================
 
-=== SCENARIO 5A: REVIEWER'S STATE-CACHING ATTACK ON STATIC TIER-1 (xi_i = 0) ===
-  [Static Tier-1 without xi_i] U_2 subtracts cached e_U2 -> Residual wt(0 || delta_rev) = 12 (<= 31)
-  [Static Tier-1 without xi_i] Patched U_2 RS Decode: true | Key Leaked: true (Confirmed Reviewer Point!)
+=== SCENARIO 5A: STATE-CACHING ATTACK ON STATIC TIER-1 (xi_i = 0) ===
+  [Static Tier-1 State-Patch] Residual Error Weight wt(delta_rev) = 12 (<= aleph = 31) | RS Decode: true | Key Exposed: true
 
 === SCENARIO 5B: TIER-1 STATE-CACHING DEFEATED BY STREAM-SEEDED NOISE (wt(xi_i) = 22) ===
-  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 28 (<= 31) | U_2 caches E_101
-  [Frame 102 U_1 Legitimate] Blind RS Decode: true | wt(e_pol + xi_102) = 30 (<= 31) | KEM Valid: true
-  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 34 (> 31)  -> BLOCKED!
-  [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 48 (> 31) -> CACHE PATCH DEFEATED!
+  [Frame 101 Pre-Revoke] U_2 Blind RS Decode: true | wt(e_pol + xi_101) = 30 (<= 31) | U_2 caches E_101
+  [Frame 102 U_1 Legitimate] Blind RS Decode: true | wt(e_pol + xi_102) = 31 (<= 31) | KEM Valid: true
+  [Frame 102 U_2 Direct]     Blind RS Decode: false | wt(e_rev + xi_102) = 39 (> 38 & 31) -> BLOCKED!
+  [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 47 (> 38 & 31) -> CACHE PATCH DEFEATED!
 
 === SCENARIO 6: INTER-FRAME LINEAR ADDITION ATTACK (c'_102 + c'_103) ===
-  Support Overlap |supp(xi_102) cap supp(xi_103)| = 1
-  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 43 (> aleph = 31)
+  Support Overlap |supp(xi_102) cap supp(xi_103)| = 3
+  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 41 (> aleph = 31)
   RS Decode on Inter-Frame Sum (c'_102 + c'_103): false -> INTER-FRAME ADDITION BLOCKED!
 
 === SCENARIO 7: RESILIENCE UNDER FULL kappa_102 COMPROMISE (WITH LOGGED sigma_102, Sigma_102) ===
-  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 43 (> aleph = 31)
+  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 41 (> aleph = 31)
   Target Frame 103 RS Decode after Full kappa_102 Leak: false -> TARGET FRAME PROTECTED!
 
 === SCENARIO 8: ANALYTICAL & MONTE CARLO SUPPORT OVERLAP BOUND ===
   [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = 1.635924364E-6 | Total Pr[wt <= 31] = 2.382234622E-6 (~ 2^-18.8)
   [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = 7.912538399E-11 | Total Pr[wt <= 31] = 2.298592658E-10 (~ 2^-32.0)
-  Theoretical E[s] = 1.898 | Empirical Mean Overlap (500 pairs) = 1.928
+  Theoretical E[s] = 1.898 | Empirical Mean Overlap (500 pairs) = 1.930
   Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 38 (Threshold aleph = 31) | Collisions: 0
 
 === SCENARIO 9: POLICY-SCOPED SELECTIVE ACTIVATION (S = 0 FAST PATH) & TIER-2 RESET ===
   [Clean Policy / Post-Tier-2 Reset] Synthetic Noise wt(xi_i) = 0 | Zero-Syndrome Fast Check (S = 0): true
   [Clean Policy / Post-Tier-2 Reset] Berlekamp-Massey Bypassed | wt = 0 | Payload Match: true
 ```
+
 `benchmark-GT-LUT-vs-Kangaroo.m`:
 
 ```text
