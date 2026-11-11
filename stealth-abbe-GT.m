@@ -596,7 +596,7 @@ p_s_22, p_tot_22 := CalcExactCollisionProb(n_rs, 22, aleph);
 printf "  [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = %o | Total Pr[wt <= 31] = %o (~ 2^-18.8)\n", p_s_20, p_tot_20;
 printf "  [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = %o | Total Pr[wt <= 31] = %o (~ 2^-32.0)\n", p_s_22, p_tot_22;
 
-num_trials := 500;
+num_trials := 50000;
 total_overlap := 0;
 min_combined_wt := 255;
 decodable_collisions := 0;
