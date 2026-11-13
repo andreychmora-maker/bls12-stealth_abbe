@@ -70,12 +70,6 @@ Evaluated on BLS12-381 for <i>η</i> = 8 (<i>Z</i> ∈ [0, 13120], <i>N</i><sub>
     * **Scenarios 5A–5B:** State-caching vulnerability reproduction on static Tier-1 (`ξ_i = 0`, `wt = 12 ≤ 31`) and complete mitigation via stream-seeded blind noise (`wt(ξ_i) = 22`, legitimate `U_1` decoded at `wt = 31 ≤ 31`, revoked `U_2` blocked at `wt = 39 > 38` direct and `wt = 47 > 38` patched).
     * **Scenarios 6–9:** Inter-frame linear addition defense (`c'_102 + c'_103`), full `κ_102` compromise resilience on target Frame 103, exact hypergeometric & 500-pair Monte Carlo overlap verification, and `S = 0` zero-syndrome fast-path bypass.
 
-- `benchmark-GT-LUT-vs-Kangaroo.m` — Memory-computation trade-off benchmarking script (10,000 trials) evaluating:
-  * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 578 B/entry, 7.58 MB / 7.23 MiB).
-  * Variant 2: Compressed 64-bit prefix <i>O</i>(1) LUT (13,121 entries, 10 B/entry, 131.2 KB / 128.1 KiB, 57.8× smaller memory footprint, L1/L2 cache-resident).
-  * Variant 3: Distinguished Points / Kangaroo search (242 entries, 578 B/entry, 139.9 KB / 136.6 KiB, 54.2× smaller memory footprint).
-  * Head-to-head online extraction timing across a full 256-block RS frame.
-
 ---
 
 ## ⚙️ Getting Started & Verification
@@ -86,15 +80,18 @@ To run the reference prototype and verify all security scenarios, open your Magm
 load "stealth-abbe-GT.m";
 load "benchmark-GT-LUT-vs-Kangaroo.m";
 ```
-### Expected Output Summary:
 
-`stealth-abbe-GT.m`:
+## Empirical Verification & Cryptanalytic Benchmark (`stealth-abbe-GT.m`)
+
+The complete Stealth ABBE verification suite—including cyclotomic $\mathbb{G}_T \subset \mathbb{F}_{p^{12}}^*$ short-interval DLP extraction on BLS12-381, cover-free Tier-1 revocation windows, and $50{,}000$-pair Monte Carlo validation of $\boldsymbol{\xi}_i$—executes directly in the **Magma Online Calculator**.
+
+### Console Output (`Magma V2.29`)
 
 ```text
 === STEALTH ABBE PROTOTYPE SETUP IN F_{p^12}^* (BLS12-381) ===
 Building O(1) Short-Interval DLP LUT in F_{p^12}^* (Max Z = 13120, Entries = 13121)...
-LUT in F_{p^12}^* constructed in 0.550 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
-Total Domain & Non-Systematic RS Setup completed in 0.750 sec.
+LUT in F_{p^12}^* constructed in 0.540 sec (Uncompressed footprint: 7.58 MB / 7.23 MiB).
+Total Domain & Non-Systematic RS Setup completed in 0.730 sec.
 
 --- VERIFYING TIER-1 CLEAN WINDOW GEOMETRY ---
   |W_1 cap W_2| = 4 (<= Delta_int = 4)
@@ -122,10 +119,10 @@ Provisioning completed in 0.510 sec.
   Algebraic Coalition RS Decode:   false -> COLLUSION DEFEATED BY TIER-1!
 
 === SCENARIO 3B: HOMOMORPHIC ODD COALITION (T = 3) IN G_T (BASE-3 CARRY OVERFLOW) ===
-  Total 255B RS Core Error Weight (Base-3 Carry Avalanche in G_T): 253 / 255 | RS Decode: false
+  Total 255B RS Core Error Weight (Base-3 Carry Avalanche in G_T): 255 / 255 | RS Decode: false
 
 === SCENARIO 4: EVEN COALITION (T = 2) MASK ANNIHILATION FAILURE ===
-  Total 255B RS Core Error Weight (Unmasked w, m): 253 / 255 | RS Decode: false
+  Total 255B RS Core Error Weight (Unmasked w, m): 254 / 255 | RS Decode: false
 
 ==========================================================================
 PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
@@ -141,26 +138,50 @@ PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
   [Frame 102 U_2 Patched]    Blind RS Decode: false | wt(delta_rev + xi_102 - xi_101) = 47 (> 38 & 31) -> CACHE PATCH DEFEATED!
 
 === SCENARIO 6: INTER-FRAME LINEAR ADDITION ATTACK (c'_102 + c'_103) ===
-  Support Overlap |supp(xi_102) cap supp(xi_103)| = 3
-  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 41 (> aleph = 31)
+  Support Overlap |supp(xi_102) cap supp(xi_103)| = 4
+  Combined Ephemeral Noise Weight wt(xi_102 + xi_103) = 40 (> aleph = 31)
   RS Decode on Inter-Frame Sum (c'_102 + c'_103): false -> INTER-FRAME ADDITION BLOCKED!
 
 === SCENARIO 7: RESILIENCE UNDER FULL kappa_102 COMPROMISE (WITH LOGGED sigma_102, Sigma_102) ===
-  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 41 (> aleph = 31)
+  Residual Error on Target Frame 103: wt(xi_103 - xi_102) = 40 (> aleph = 31)
   Target Frame 103 RS Decode after Full kappa_102 Leak: false -> TARGET FRAME PROTECTED!
 
 === SCENARIO 8: ANALYTICAL & MONTE CARLO SUPPORT OVERLAP BOUND ===
   [Profile wt(xi)=20, w_pol<=11] Exact Pr[s >= 9]  = 1.635924364E-6 | Total Pr[wt <= 31] = 2.382234622E-6 (~ 2^-18.8)
   [Profile wt(xi)=22, w_pol<=9]  Exact Pr[s >= 13] = 7.912538399E-11 | Total Pr[wt <= 31] = 2.298592658E-10 (~ 2^-32.0)
-  Theoretical E[s] = 1.898 | Empirical Mean Overlap (500 pairs) = 1.930
-  Empirical Minimum wt(xi_i + xi_j) across 500 pairs: 38 (Threshold aleph = 31) | Collisions: 0
+  Theoretical E[s] = 1.898 | Empirical Mean Overlap (50000 pairs) = 1.904
+  Empirical Minimum wt(xi_i + xi_j) across 50000 pairs: 35 (Threshold aleph = 31) | Collisions: 0
 
 === SCENARIO 9: POLICY-SCOPED SELECTIVE ACTIVATION (S = 0 FAST PATH) & TIER-2 RESET ===
   [Clean Policy / Post-Tier-2 Reset] Synthetic Noise wt(xi_i) = 0 | Zero-Syndrome Fast Check (S = 0): true
   [Clean Policy / Post-Tier-2 Reset] Berlekamp-Massey Bypassed | wt = 0 | Payload Match: true
 ```
 
-`benchmark-GT-LUT-vs-Kangaroo.m`:
+### Verification Summary Table
+
+| Scenario | Operational / Adversarial Test Case | Observed Weight `wt(e)` | Bound (`ℵ = 31`, `J = 38`) | RS Decode | Security Verdict |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Scenario 1** | Baseline Authorized Broadcast (Monolithic KEM) | `27` (U1, U2) | `<= 31` | `true` | ✅ Validated (`0.180 s`) |
+| **Scenario 2** | Stateless Tier-1 Intra-Epoch Revocation (`w_pert = 12`) | `39` (U2) / `31` (U1) | `> 38` / `<= 31` | `false` / `true` | 🛡️ U2 Blocked, U1 Decodes |
+| **Scenario 3A** | Algebraic Odd Coalition (`T = 3`, Identical Semantic Attrs) | `43` | `> 38` | `false` | 🛡️ Cover-Free Amplification |
+| **Scenario 3B** | Homomorphic Odd Coalition (`T = 3`, 4 Operands in `G_T`) | `255 / 255` | `> 38` | `false` | 🛡️ Base-3 Carry Avalanche |
+| **Scenario 4** | Homomorphic Even Coalition (`T = 2`, Mask Self-Annihilation) | `254 / 255` | `> 38` | `false` | 🛡️ Masks `(w, m)` Intact |
+| **Scenario 5A** | State-Caching Patch on Static Tier-1 (`xi_i = 0` Baseline) | `12` | `<= 31` | `true` | ⚠️ Vulnerable without `xi_i` |
+| **Scenario 5B** | Tier-1 Quarantine with Stream-Seeded `xi_i` (`wt(xi_i) = 22`) | `31` (U1) / `39` (Dir) / `47` (Patch) | `<= 31` / `> 38` | `true` / `false` | 🛡️ Cache Patch Defeated |
+| **Scenario 6** | Inter-Frame Linear Addition (`c'_102 + c'_103`) | `40` (`overlap = 4`) | `> 31` | `false` | 🛡️ Frame Sum Blocked |
+| **Scenario 7** | Target Frame 103 under Full `kappa_102` Compromise | `40` | `> 31` | `false` | 🛡️ Forward/Post Isolation |
+| **Scenario 8** | Analytical Bound & `50,000`-Pair Monte Carlo (`wt(xi_i) = 22`) | `min = 35` (`E[s] = 1.904`) | `> 31` | `0 collisions` | ✅ `Pr ≈ 2.30e-10 (~2^-32.0)` |
+| **Scenario 9** | Policy-Scoped Fast Path (`S = 0`) & Post-Tier-2 Reset | `0` | `0` | `true` (Bypass) | ⚡ BM Decoder Bypassed |
+
+## Empirical Verification & Cryptanalytic Benchmark (`benchmark-GT-LUT-vs-Kangaroo.m`)
+
+- Memory-computation trade-off benchmarking script (10,000 trials) evaluating:
+  * Variant 1: Direct uncompressed <i>O</i>(1) LUT (13,121 entries, 578 B/entry, 7.58 MB / 7.23 MiB).
+  * Variant 2: Compressed 64-bit prefix <i>O</i>(1) LUT (13,121 entries, 10 B/entry, 131.2 KB / 128.1 KiB, 57.8× smaller memory footprint, L1/L2 cache-resident).
+  * Variant 3: Distinguished Points / Kangaroo search (242 entries, 578 B/entry, 139.9 KB / 136.6 KiB, 54.2× smaller memory footprint).
+  * Head-to-head online extraction timing across a full 256-block RS frame.
+  
+### Console Output (`Magma V2.29`)
 
 ```text
 === INITIALIZING BLS12-381 TARGET GROUP G_T subset F_{p^12}^* ===
