@@ -451,12 +451,12 @@ M_rev_sc   := 26;
 wt_xi      := 22;
 tau_sc     := 8;
 
-// Детерминированные окна по 14B с пересечением |W_1 cap W_2| = 1B (координата 1)
+// Deterministic 14B windows with an overlap of |W_1 ∩ W_2| = 1B (coordinate 1)
 ScopedWindows := [
     {1..14},               // U_1 clean window (14B); дополнение в 1..26 -> [15..26]
     {1} join {15..26}      // U_2 clean window; |W_1 cap W_2| = 1 byte
 ];
-// Упорядоченный список возмущаемых координат U_2 (9B: 1B в W_1 cap W_2 и 8B в S_1 = {15..22})
+// An ordered list of perturbed coordinates $U_2$ (9B: 1B in $W_1 \cap W_2$ and 8B in $S_1 = \{15..22\}$)
 ScopedPerturbSeq := [1] cat [15..22]; // w_pert = 9 (или [15..22] для w_pert = 8 и wt(U_1) = 30)
 
 BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
@@ -476,7 +476,7 @@ BuildScopedUserVector := function(W_j, p_pol, w_coh, m_msk, tau_val)
     return r_j, M_j;
 end function;
 
-// Симметричная инициализация U_1 и U_2 с одинаковым tau_sc = 8
+// Symmetric initialization of U_1 and U_2 with the same tau_sc = 8
 r_U1_sc, M_U1_scoped := BuildScopedUserVector(ScopedWindows[1], p_policy, w_cohort, m_mask, tau_sc);
 r_U2_sc, M_U2_scoped := BuildScopedUserVector(ScopedWindows[2], p_policy, w_cohort, m_mask, tau_sc);
 
@@ -498,7 +498,7 @@ p_rev_scoped := p_policy;
 for s in ScopedPerturbSeq do
     pos := attr_len + s;
     d_val := Random(F);
-    // Гарантируем отсутствие случайного зануления в F_256^* при поглощении (вероятность 254/255)
+    // We guarantee that no accidental zeroing occurs in $F_{256}^*$ during absorption (with a probability of 254/255).
     while (d_val eq F!0) or ((p_policy[pos] + d_val) eq r_U1_sc[pos]) do
         d_val := Random(F);
     end while;
