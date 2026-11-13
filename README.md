@@ -161,17 +161,17 @@ PART 8: DYNAMIC ENTROPY (xi_i) & MONOLITHIC KEM DEFENSE SUITE
 
 | Scenario | Operational / Adversarial Test Case | Observed Weight `wt(e)` | Bound (`ℵ = 31`, `J = 38`) | RS Decode | Security Verdict |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Scenario 1** | Baseline Authorized Broadcast (Monolithic KEM) | `27` (U1, U2) | `<= 31` | `true` | ✅ Validated (`0.180 s`) |
-| **Scenario 2** | Stateless Tier-1 Intra-Epoch Revocation (`w_pert = 12`) | `39` (U2) / `31` (U1) | `> 38` / `<= 31` | `false` / `true` | 🛡️ U2 Blocked, U1 Decodes |
-| **Scenario 3A** | Algebraic Odd Coalition (`T = 3`, Identical Semantic Attrs) | `43` | `> 38` | `false` | 🛡️ Cover-Free Amplification |
-| **Scenario 3B** | Homomorphic Odd Coalition (`T = 3`, 4 Operands in `G_T`) | `255 / 255` | `> 38` | `false` | 🛡️ Base-3 Carry Avalanche |
-| **Scenario 4** | Homomorphic Even Coalition (`T = 2`, Mask Self-Annihilation) | `254 / 255` | `> 38` | `false` | 🛡️ Masks `(w, m)` Intact |
-| **Scenario 5A** | State-Caching Patch on Static Tier-1 (`xi_i = 0` Baseline) | `12` | `<= 31` | `true` | ⚠️ Vulnerable without `xi_i` |
-| **Scenario 5B** | Tier-1 Quarantine with Stream-Seeded `xi_i` (`wt(xi_i) = 22`) | `31` (U1) / `39` (Dir) / `47` (Patch) | `<= 31` / `> 38` | `true` / `false` | 🛡️ Cache Patch Defeated |
-| **Scenario 6** | Inter-Frame Linear Addition (`c'_102 + c'_103`) | `40` (`overlap = 4`) | `> 31` | `false` | 🛡️ Frame Sum Blocked |
-| **Scenario 7** | Target Frame 103 under Full `kappa_102` Compromise | `40` | `> 31` | `false` | 🛡️ Forward/Post Isolation |
-| **Scenario 8** | Analytical Bound & `50,000`-Pair Monte Carlo (`wt(xi_i) = 22`) | `min = 35` (`E[s] = 1.904`) | `> 31` | `0 collisions` | ✅ `Pr ≈ 2.30e-10 (~2^-32.0)` |
-| **Scenario 9** | Policy-Scoped Fast Path (`S = 0`) & Post-Tier-2 Reset | `0` | `0` | `true` (Bypass) | ⚡ BM Decoder Bypassed |
+| **Sc. 1** | Baseline Authorized Broadcast (Monolithic KEM) | `27` (U_1, U_2) | `<= 31` | `true` | ✅ Validated (`0.180 s`) |
+| **Sc. 2** | Stateless Tier-1 Intra-Epoch Revocation (`w_pert = 12`) | `39` (U_2) / `31` (U_1) | `> 38` / `<= 31` | `false` / `true` | 🛡️ U_2 Blocked, U_1 Decodes |
+| **Sc. 3A** | Algebraic Odd Coalition (`T = 3`, Identical Semantic Attrs) | `43` | `> 38` | `false` | 🛡️ Cover-Free Amplification |
+| **Sc. 3B** | Homomorphic Odd Coalition (`T = 3`, 4 Operands in `G_T`) | `255 / 255` | `> 38` | `false` | 🛡️ Base-3 Carry Avalanche |
+| **Sc. 4** | Homomorphic Even Coalition (`T = 2`, Mask Self-Annihilation) | `254 / 255` | `> 38` | `false` | 🛡️ Masks `(w, m)` Intact |
+| **Sc. 5A** | State-Caching Patch on Static Tier-1 (`xi_i = 0` Baseline) | `12` | `<= 31` | `true` | ⚠️ Vulnerable without `xi_i` |
+| **Sc. 5B** | Tier-1 Quarantine with Stream-Seeded `xi_i` (`wt(xi_i) = 22`) | `31` (U1) / `39` (Dir) / `47` (Patch) | `<= 31` / `> 38` | `true` / `false` | 🛡️ Cache Patch Defeated |
+| **Sc. 6** | Inter-Frame Linear Addition (`c'_102 + c'_103`) | `40` (`overlap = 4`) | `> 31` | `false` | 🛡️ Frame Sum Blocked |
+| **Sc. 7** | Target Frame 103 under Full `kappa_102` Compromise | `40` | `> 31` | `false` | 🛡️ Forward/Post Isolation |
+| **Sc. 8** | Analytical Bound & `50,000`-Pair Monte Carlo (`wt(xi_i) = 22`) | `min = 35` (`E[s] = 1.904`) | `> 31` | `0 collisions` | ✅ `Pr ≈ 2.30e-10 (~2^-32.0)` |
+| **Sc. 9** | Policy-Scoped Fast Path (`S = 0`) & Post-Tier-2 Reset | `0` | `0` | `true` (Bypass) | ⚡ BM Decoder Bypassed |
 
 ## Empirical Verification & Cryptanalytic Benchmark (`benchmark-GT-LUT-vs-Kangaroo.m`)
 
