@@ -83,7 +83,7 @@ load "benchmark-GT-LUT-vs-Kangaroo.m";
 
 ## Empirical Verification & Cryptanalytic Benchmark (`stealth-abbe-GT.m`)
 
-The complete Stealth ABBE verification suite—including cyclotomic $\mathbb{G}_T \subset \mathbb{F}_{p^{12}}^*$ short-interval DLP extraction on BLS12-381, cover-free Tier-1 revocation windows, and $50{,}000$-pair Monte Carlo validation of $\boldsymbol{\xi}_i$—executes directly in the **Magma Online Calculator**.
+The complete Stealth ABBE verification suite—including cyclotomic 𝔾<sub><i>T</i></sub> ⊂ 𝔽*<sub><i>p</i><sup>12</sup></sub> short-interval DLP extraction on BLS12-381, cover-free Tier-1 revocation windows, and $50{,}000$-pair Monte Carlo validation of $\boldsymbol{\xi}_i$—executes directly in the **Magma Online Calculator**.
 
 ### Console Output (`Magma V2.29`)
 
